@@ -11,7 +11,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- * Based on original DH by Eric Maycock 2015 and Rave from Lazcad, by a4refillpad, edited by RostikBor
+ * Based on original DH by Eric Maycock 2015 and Rave from Lazcad, by a4refillpad
  *  change log:
  *  add DH Colours
  *  added 100% battery max
@@ -20,7 +20,7 @@
  *	added switch last opened
  */
 metadata {
-   definition (name: "Xiaomi Door/Window Sensor (Garage w lastOpen)", namespace: "RostikBor", author: "RostikBor") {
+   definition (name: "Xiaomi Door/Window Sensor (garage w lastOpen)", namespace: "RostikBor", author: "RostikBor") {
    capability "Configuration"
    capability "Sensor"
    capability "Contact Sensor"
@@ -50,33 +50,34 @@ metadata {
     			attributeState("default", label:'Last Opened: ${currentValue}')
             }
       }
+      valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
+			state "default", label:'Last Checkin: ${currentValue}'
+		}
       valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 2, height: 2) {
 			state "battery", label:'${currentValue}% battery', unit:""
 		}
-        
       standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", action:"refresh.refresh", icon:"st.secondary.refresh"
       }
       standardTile("configure", "device.configure", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
 			state "configure", label:'', action:"configuration.configure", icon:"st.secondary.configure"
 	  }
-
       main (["contact"])
-      details(["contact","refresh","configure", "battery"])
+      details(["contact","refresh","configure", "battery","lastcheckin"])
    }
 }
 
 def parse(String description) {
    log.debug "Parsing '${description}'"
    
-   if (description?.startsWith('on/off: 1')) {
-   //simpleDateFormat.setTimeZone(TimeZone.getDefault());
+   //  send event for heartbeat    
    def now = new Date().format("yyyy-MM-dd h:mm:ss a", location.timeZone)
+   sendEvent(name: "lastCheckin", value: now)
+   
+   if (description?.startsWith('on/off: 1')) {
+   now = new Date().format("yyyy-MM-dd h:mm:ss a", location.timeZone)
    sendEvent(name: "lastOpen", value: now)
    }
-   
-   def now = new Date()
-   sendEvent(name: "lastCheckin", value: now)
    
    Map map = [:]
 
