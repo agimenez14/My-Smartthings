@@ -50,33 +50,34 @@ metadata {
     			attributeState("default", label:'Last Opened: ${currentValue}')
             }
       }
+      valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
+			state "default", label:'Last Checkin: ${currentValue}'
+		}
       valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 2, height: 2) {
 			state "battery", label:'${currentValue}% battery', unit:""
 		}
-        
       standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
             state "default", action:"refresh.refresh", icon:"st.secondary.refresh"
       }
       standardTile("configure", "device.configure", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
 			state "configure", label:'', action:"configuration.configure", icon:"st.secondary.configure"
 	  }
-
       main (["contact"])
-      details(["contact","refresh","configure", "battery"])
+      details(["contact","refresh","configure", "battery","lastcheckin"])
    }
 }
 
 def parse(String description) {
    log.debug "Parsing '${description}'"
    
-   if (description?.startsWith('on/off: 1')) {
-   //simpleDateFormat.setTimeZone(TimeZone.getDefault());
+   //  send event for heartbeat    
    def now = new Date().format("yyyy-MM-dd h:mm:ss a", location.timeZone)
+   sendEvent(name: "lastCheckin", value: now)
+   
+   if (description?.startsWith('on/off: 1')) {
+   now = new Date().format("yyyy-MM-dd h:mm:ss a", location.timeZone)
    sendEvent(name: "lastOpen", value: now)
    }
-   
-   def now = new Date()
-   sendEvent(name: "lastCheckin", value: now)
    
    Map map = [:]
 
