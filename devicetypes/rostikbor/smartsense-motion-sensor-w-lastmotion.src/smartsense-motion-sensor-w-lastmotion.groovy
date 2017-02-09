@@ -95,7 +95,7 @@ def parse(String description) {
 	log.debug "description: $description"
 
 	if (description?.startsWith('zone status')) {
-    def now = new Date().format("yyyy-MM-dd h:mm:ss a", location.timeZone)
+    def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
     sendEvent(name: "lastMotion", value: now)
     }
 

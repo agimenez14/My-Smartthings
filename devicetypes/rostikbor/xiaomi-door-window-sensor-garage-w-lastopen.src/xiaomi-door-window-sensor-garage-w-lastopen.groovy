@@ -71,11 +71,11 @@ def parse(String description) {
    log.debug "Parsing '${description}'"
    
    //  send event for heartbeat    
-   def now = new Date().format("yyyy-MM-dd h:mm:ss a", location.timeZone)
+   def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
    sendEvent(name: "lastCheckin", value: now)
    
    if (description?.startsWith('on/off: 1')) {
-   now = new Date().format("yyyy-MM-dd h:mm:ss a", location.timeZone)
+   now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
    sendEvent(name: "lastOpen", value: now)
    }
    

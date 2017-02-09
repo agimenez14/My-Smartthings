@@ -121,7 +121,7 @@ metadata {
 def parse(String description) {
 
 	if (device.latestValue("status") == "garage-open" || device.latestValue("status") == "open") {
-    def now = new Date().format("yyyy-MM-dd h:mm:ss a", location.timeZone)
+    def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
     sendEvent(name: "lastOpen", value: now)
     }
 
