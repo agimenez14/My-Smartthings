@@ -85,18 +85,22 @@ metadata {
 		standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "default", action:"refresh.refresh", icon:"st.secondary.refresh"
 		}
-
+		valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
+			state "default", label:'Last Checkin: ${currentValue}'
+		}
 		main(["motion", "temperature"])
-		details(["motion", "temperature", "battery", "refresh"])
+		details(["motion", "temperature", "battery", "refresh", "lastcheckin"])
 	}
 }
 
 def parse(String description) {
 	log.debug "description: $description"
-
+    
+	def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
+    sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in")
+   
 	if (description?.startsWith('zone status')) {
-    def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-    sendEvent(name: "lastMotion", value: now)
+    sendEvent(name: "lastMotion", value: now, descriptionText: "")
     }
 
 	Map map = [:]

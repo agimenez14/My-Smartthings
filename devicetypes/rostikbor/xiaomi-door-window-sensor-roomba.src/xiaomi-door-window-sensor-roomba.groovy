@@ -20,12 +20,13 @@
  *	added switch last opened
  */
 metadata {
-   definition (name: "Xiaomi Door/Window Sensor (w lastOpen)", namespace: "RostikBor", author: "RostikBor") {
+   definition (name: "Xiaomi Door/Window Sensor (Roomba)", namespace: "RostikBor", author: "RostikBor") {
    capability "Configuration"
    capability "Sensor"
    capability "Contact Sensor"
    capability "Refresh"
    capability "Battery"
+   capability "Motion Sensor"
    
    attribute "lastCheckin", "String" 
    
@@ -34,11 +35,7 @@ metadata {
    command "enrollResponse"
  
    }
-   preferences
-   {
-   input("IsGarage", "bool", title: "Using for a garage?", required: false, displayDuringSetup: false, defaultValue: false)
-   //input("IsGarage", "enum", title: "Using for a garage?", description: "", options: ["Yes", "No"], defaultValue: "No", required: false, displayDuringSetup: false)
-   }
+    
    simulator {
       status "closed": "on/off: 0"
       status "open": "on/off: 1"
@@ -47,18 +44,19 @@ metadata {
    tiles(scale: 2) {
       multiAttributeTile(name:"contact", type: "generic", width: 6, height: 4){
          tileAttribute ("device.contact", key: "PRIMARY_CONTROL") {
-            attributeState "open", label:'Open', icon:"st.contact.contact.open", backgroundColor:"#ffa81e"
-            attributeState "closed", label:'Closed', icon:"st.contact.contact.closed", backgroundColor:"#79b821"
-            attributeState "open-garage", label:'Open', icon:"st.doors.garage.garage-open", backgroundColor:"#ffa81e"
-            attributeState "closed-garage", label:'Closed', icon:"st.doors.garage.garage-closed", backgroundColor:"#79b821"
+            attributeState "open", label:'Undocked', icon:"st.samsung.da.RC_ic_rc", backgroundColor:"#ffa81e"
+            attributeState "closed", label:'Charging', icon:"st.samsung.da.RC_ic_rc", backgroundColor:"#79b821"
          }
-            tileAttribute("device.lastOpen", key: "SECONDARY_CONTROL") {
-    			attributeState("default", label:'Last Opened: ${currentValue}')
+            tileAttribute("device.lastUndocked", key: "SECONDARY_CONTROL") {
+    			attributeState("default", label:'Last Undocked: ${currentValue}')
             }
       }
       valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
 			state "default", label:'Last Checkin: ${currentValue}'
-		}
+	 }
+      valueTile("lastdocked", "device.lastDocked", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
+			state "default", label:'Last Docked: ${currentValue}'
+	 }
       valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 2, height: 2) {
 			state "battery", label:'${currentValue}% battery', unit:""
 		}
@@ -69,7 +67,7 @@ metadata {
 			state "configure", label:'', action:"configuration.configure", icon:"st.secondary.configure"
 	  }
       main (["contact"])
-      details(["contact","battery","configure","refresh", "lastcheckin"])
+      details(["contact","battery","configure", "refresh","lastcheckin"])
    }
 }
 
@@ -81,13 +79,16 @@ def parse(String description) {
    sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in")
    
    if (description?.startsWith('on/off: 1')) {
-   		sendEvent(name: "lastOpen", value: now, descriptionText: "")
+   		now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
+   		sendEvent(name: "lastUndocked", value: now, descriptionText: "")
+   		sendEvent(name:"motion", value:"active", descriptionText: "")
    }
-   
+   if (description?.startsWith('on/off: 0')) {
+   		sendEvent(name:"motion", value:"inactive", descriptionText: "")
+   }
    Map map = [:]
 
    log.debug "${resultMap}"
-   
    if (description?.startsWith('on/off: '))
       map = parseCustomMessage(description) 
    if (description?.startsWith('catchall:')) 
@@ -207,20 +208,13 @@ private Map parseCustomMessage(String description) {
          result = getContactResult("closed")
       else if (description == 'on/off: 1') 	//contact opened
          result = getContactResult("open")
-      }
       return result
    }
-
+}
 
 private Map getContactResult(value) {
    def linkText = getLinkText(device)
-   def descriptionText = "${linkText} was ${value == 'open' ? 'opened' : 'closed'}"
-   if (IsGarage == true) {
-   		if (value == 'open')
-        	value = 'open-garage'
-        else 
-           value = 'closed-garage'
-   }
+   def descriptionText = "${linkText} ${value == 'open' ? 'Undocked' : 'is Charging'}"
    return [
       name: 'contact',
       value: value,

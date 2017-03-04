@@ -111,18 +111,21 @@ metadata {
 		standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "default", action:"refresh.refresh", icon:"st.secondary.refresh"
 		}
-
-
+		valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
+			state "default", label:'Last Checkin: ${currentValue}'
+		}
 		main(["status", "acceleration", "temperature"])
-		details(["status", "acceleration", "temperature", "battery", "refresh"])
+		details(["status", "acceleration", "temperature", "battery", "lastcheckin"])
 	}
  }
 
 def parse(String description) {
-
-	if (device.latestValue("status") == "garage-open" || device.latestValue("status") == "open") {
+	//  send event for heartbeat    
     def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-    sendEvent(name: "lastOpen", value: now)
+    sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in")
+   
+	if (device.latestValue("status") == "garage-open" || device.latestValue("status") == "open") {
+    sendEvent(name: "lastOpen", value: now, descriptionText: "")
     }
 
 	Map map = [:]

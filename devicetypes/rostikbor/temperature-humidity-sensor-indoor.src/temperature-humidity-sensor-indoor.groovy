@@ -65,13 +65,13 @@ metadata {
 		valueTile("temperatureC", "device.temperatureC", width: 2, height: 2) {
 			state "temperatureC", label:'${currentValue}°C',
 				backgroundColors:[
-					[value: 15, color: "#153591"],
-					[value: 17, color: "#1e9cbb"],
-					[value: 19, color: "#90d2a7"],
-					[value: 22, color: "#44b621"],
-					[value: 26, color: "#f1d801"],
-					[value: 30, color: "#d04e00"],
-					[value: 35, color: "#bc2323"]
+					[value: 14.4, color: "#153591"],
+					[value: 17.2, color: "#1e9cbb"],
+					[value: 19.4, color: "#90d2a7"],
+					[value: 21.7, color: "#44b621"],
+					[value: 26.7, color: "#f1d801"],
+					[value: 31.7, color: "#d04e00"],
+					[value: 35.6, color: "#bc2323"]
                     ]
 		}
         valueTile("lasttemp", "device.lastTemp", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
@@ -92,7 +92,7 @@ metadata {
 def parse(String description) {
 	//  send event for heartbeat    
     def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-    sendEvent(name: "lastCheckin", value: now)
+    sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in")
 	//def realFeel = 80
 	//def t = 70
 	//def rh = 35
@@ -113,11 +113,11 @@ def parse(String description) {
     	sendEvent(name: "temperatureC", value: df.format(celsius))
         // temp heartbeat
         now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-    	sendEvent(name: "lastTemp", value: now)
+    	sendEvent(name: "lastTemp", value: now, descriptionText: "")
     }
     if (name == "humidity"){     
     now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-    sendEvent(name: "lastHumid", value: now)
+    sendEvent(name: "lastHumid", value: now, descriptionText: "")
     }
 	def unit = name == "temperature" ? getTemperatureScale() : (name == "humidity" ? "%" : null)
 	

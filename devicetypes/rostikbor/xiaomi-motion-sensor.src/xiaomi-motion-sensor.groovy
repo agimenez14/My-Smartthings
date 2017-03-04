@@ -66,14 +66,14 @@ metadata {
 			state "configure", label:'', action:"configuration.configure", icon:"st.secondary.configure"
 	  }       
         
-		standardTile("reset", "device.reset", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+		standardTile("reset", "device.reset", inactiveLabel: false, decoration: "flat", width: 2, height: 1) {
 			state "default", action:"reset", label: "Reset Motion"
 		}
         valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 4, height: 1) {
 			state "default", label:'Check in: ${currentValue}'
 		}
 		main(["motion"])
-		details(["motion", "reset", "battery", "refresh", "configure","lastcheckin"])
+		details(["motion", "configure", "battery", "refresh", "reset","lastcheckin"])
 	}
 }
 
@@ -91,9 +91,10 @@ def parse(String description) {
  
 	log.debug "Parse returned $map"
 	def result = map ? createEvent(map) : null
+    
 //  send event for heartbeat    
     def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-    sendEvent(name: "lastCheckin", value: now)
+    sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in")
     
     if (description?.startsWith('enroll request')) {
     	List cmds = enrollResponse()
@@ -220,7 +221,7 @@ private Map parseReportAttributeMessage(String description) {
     else if (descMap.cluster == "0406" && descMap.attrId == "0000") {
     	def value = descMap.value.endsWith("01") ? "active" : "inactive"
         def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-        	sendEvent(name: "lastMotion", value: now)
+        	sendEvent(name: "lastMotion", value: now, descriptionText: "")
         if (settings.motionReset == null || settings.motionReset == "" ) settings.motionReset = 120
         if (value == "active") runIn(settings.motionReset, stopMotion)
     	resultMap = getMotionResult(value)
