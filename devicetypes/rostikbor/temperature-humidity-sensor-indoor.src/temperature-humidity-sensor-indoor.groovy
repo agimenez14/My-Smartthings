@@ -18,6 +18,7 @@ metadata {
 		capability "Temperature Measurement"
 		capability "Relative Humidity Measurement"
 		capability "Sensor"
+        capability "Battery"
 
 		fingerprint profileId: "0104", deviceId: "0302", inClusters: "0000,0001,0003,0009,0402,0405"
 	}
@@ -60,10 +61,10 @@ metadata {
 					[value: 50, color: "#87a5ff"],
 					[value: 65, color: "#517cff"],
 					[value: 80, color: "#0041ff"]
-                    ]
+                ]
 		}
 		valueTile("temperatureC", "device.temperatureC", width: 2, height: 2) {
-			state "temperatureC", label:'${currentValue}°C',
+			state "temperatureC", label:'${currentValue}°C'/*,
 				backgroundColors:[
 					[value: 14.4, color: "#153591"],
 					[value: 17.2, color: "#1e9cbb"],
@@ -72,7 +73,7 @@ metadata {
 					[value: 26.7, color: "#f1d801"],
 					[value: 31.7, color: "#d04e00"],
 					[value: 35.6, color: "#bc2323"]
-                    ]
+                    ]*/
 		}
         valueTile("lasttemp", "device.lastTemp", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
 			state "default", label:'Last Temp: ${currentValue}'
@@ -80,11 +81,14 @@ metadata {
         valueTile("lasthumid", "device.lastHumid", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
 			state "default", label:'Last Humidity: ${currentValue}'
 		}
+        valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 1, height: 1) {
+			state "default", label:'${currentValue}% battery', unit:""
+		}
         valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
 			state "default", label:'Last Check-in: ${currentValue}'
 		}
 		main(["temperature", "humidity"])
-		details(["temperature", "humidity", "temperatureC","lasttemp","lasthumid","lastcheckin"])
+		details(["temperature", "humidity", "temperatureC","lasttemp","battery","lasthumid","lastcheckin"])
 	}
 }
 
@@ -109,8 +113,8 @@ def parse(String description) {
     } */
     if (name == "temperature"){    	
     	def celsius = ((value.toInteger() - 32) * 0.5556)
-        DecimalFormat df = new DecimalFormat("0.0") 
-    	sendEvent(name: "temperatureC", value: df.format(celsius))
+        //DecimalFormat df = new DecimalFormat("0.0") 
+    	sendEvent(name: "temperatureC", value: celsius.toInteger())
         // temp heartbeat
         now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
     	sendEvent(name: "lastTemp", value: now, descriptionText: "")
@@ -142,11 +146,48 @@ private String parseName(String description) {
 private String parseValue(String description) {
 	if (description?.startsWith("temperature: ")) {
 		return zigbee.parseHATemperatureValue(description, "temperature: ", getTemperatureScale())
-	} else if (description?.startsWith("humidity: ")) {
+	} 
+    else if (description?.startsWith("humidity: ")) {
 		def pct = (description - "humidity: " - "%").trim()
 		if (pct.isNumber()) {
 			return Math.round(new BigDecimal(pct)).toString()
-		}
-	}
+	    } 
+    }
+    else if (description?.startsWith("catchall: ")) {
+		return parseCatchAllMessage(description)
+     }
+	
 	null
 }
+private String parseCatchAllMessage(String description) {
+	def result = '--'
+	def cluster = zigbee.parse(description)
+	log.debug cluster
+	if (cluster) {
+		switch(cluster.clusterId) {
+			case 0x0000:
+			result = getBatteryResult(cluster.data.get(6)) 
+ 			break
+		}
+	}
+
+	return result
+}
+
+
+private String getBatteryResult(rawValue) {
+	log.debug 'Battery'
+	def linkText = getLinkText(device)
+	log.debug rawValue
+
+	def result =  '--'
+    def maxBatt = 100
+    def battLevel = Math.round(rawValue * 100 / 255)
+
+	if (battLevel > maxBatt) {
+				battLevel = maxBatt
+    }
+
+	return battLevel
+}
+

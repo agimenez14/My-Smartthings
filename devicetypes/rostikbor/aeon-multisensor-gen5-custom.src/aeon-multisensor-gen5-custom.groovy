@@ -117,17 +117,28 @@ metadata
 		valueTile("temperature", "device.temperature", inactiveLabel: false, width: 2, height: 2) {
 			state "temperature", label:'${currentValue}°',
 			backgroundColors:[
-				[value: 32, color: "#153591"],
-				[value: 44, color: "#1e9cbb"],
-				[value: 59, color: "#90d2a7"],
-				[value: 74, color: "#44b621"],
-				[value: 84, color: "#f1d801"],
-				[value: 92, color: "#d04e00"],
-				[value: 98, color: "#bc2323"]
+				[value: 58, color: "#153591"],
+				[value: 63, color: "#1e9cbb"],
+				[value: 67, color: "#90d2a7"],
+				[value: 71, color: "#44b621"],
+				[value: 80, color: "#f1d801"],
+				[value: 89, color: "#d04e00"],
+				[value: 96, color: "#bc2323"]
 			]
 		}
 		valueTile("humidity", "device.humidity", inactiveLabel: false, width: 2, height: 2) {
-			state "humidity", label:'${currentValue}% humidity', unit:""
+			state "humidity", label:'${currentValue}%', unit:"",
+				backgroundColors:[
+                	[value: 10, color: "#ffffff"],
+					[value: 20, color: "#edf1ff"],
+					[value: 30, color: "#d3deff"],
+                    [value: 35, color: "#beccf4"],
+					[value: 40, color: "#a3baff"],
+                    [value: 45, color: "#93aeff"],
+					[value: 50, color: "#87a5ff"],
+					[value: 65, color: "#517cff"],
+					[value: 80, color: "#0041ff"]
+                ]
 		}
 		valueTile("illuminance", "device.illuminance", inactiveLabel: false, width: 2, height: 2) {
 			state "luminosity", label:'${currentValue} lux', unit:"lux"
@@ -141,8 +152,8 @@ metadata
 		standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "default", label:'', action:"refresh.refresh", icon:"st.secondary.refresh"
 		}
-		main(["motion", "temperature", "humidity", "illuminance"])
-		details(["motion", "temperature", "battery", "refresh", "illuminance", "humidity", "configure"])
+		main(["temperature", "motion", "humidity", "illuminance"])
+		details(["motion", "temperature", "humidity", "refresh", "illuminance", "battery", "configure"])
 	}
 }
 
@@ -211,10 +222,10 @@ def zwaveEvent(physicalgraph.zwave.commands.sensormultilevelv5.SensorMultilevelR
 	switch (cmd.sensorType) {
 		case 1:
 			map.name = "temperature"
-			def cmdScale = cmd.scale == 1 ? "F" : "C"
-            def tempAdj = cmd.scaledSensorValue.toInteger() - 2
+			def cmdScale = cmd.scale == 1 ? "F" : "C" 
+            def tempAdj = Math.round(cmd.scaledSensorValue.toDouble()) //- 3)
             if (cmd.scale != 1)
-            tempAdj = convertTemperatureIfNeeded(cmd.scaledSensorValue, cmdScale, cmd.precision)
+            	tempAdj = convertTemperatureIfNeeded(cmd.scaledSensorValue, cmdScale, cmd.precision) 
 			map.value = tempAdj
 			map.unit = getTemperatureScale()
 			break;
@@ -231,7 +242,7 @@ def zwaveEvent(physicalgraph.zwave.commands.sensormultilevelv5.SensorMultilevelR
             else if (tempAdj < 32)
             	humidAdj = (humidAdj * 1.26).toInteger()
             else //if (tempAdj < 35)
-            	humidAdj = (humidAdj * 1.28).toInteger()
+            	humidAdj = (humidAdj * 1.3).toInteger()
 			map.value = humidAdj //(cmd.scaledSensorValue * 1.2).toInteger()// + 5
 			map.unit = "%"
 			break;
