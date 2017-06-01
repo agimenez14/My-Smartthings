@@ -17,7 +17,6 @@
 metadata {
 	definition (name: "Host Ping Device (idle/in use)", namespace: "RostikBor", author: "RostikBor") {
 		capability "switch"
-        capability "presenceSensor"
         capability "Motion Sensor"
         capability "Actuator"
         capability "Button"
@@ -51,7 +50,6 @@ def parse(String description) {
 
 def on() {
     sendEvent(name: "switch", value: "in use", descriptionText: "Is in Use");
-    //sendEvent(name: "presence", value: "present");
     sendEvent(name:"motion", value:"active")    
     def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
     sendEvent(name: "lastMotion", value: now, descriptionText: "")
@@ -59,7 +57,6 @@ def on() {
 
 def off() {
     sendEvent(name: "switch", value: "idle", descriptionText: "Is Idle");
-    //sendEvent(name: "presence", value: "not present");
     sendEvent(name:"motion", value:"inactive")
 }
 

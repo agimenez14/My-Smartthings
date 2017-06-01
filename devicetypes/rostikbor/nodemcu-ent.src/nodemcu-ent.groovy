@@ -22,17 +22,17 @@
  */
  
 metadata {
-	definition (name: "NodeMCU (Sus)", namespace: "RostikBor", author: "RostikBor") {
+	definition (name: "NodeMCU (Ent)", namespace: "RostikBor", author: "RostikBor") {
 		capability "Configuration"
-		//capability "Illuminance Measurement"
+		capability "Illuminance Measurement"
 		capability "Temperature Measurement"
-		capability "Relative Humidity Measurement"
+		//capability "Relative Humidity Measurement"
 		//capability "Water Sensor"
 		capability "Motion Sensor"
 		capability "Switch"
 		capability "Sensor"
-		//capability "Alarm"
-		capability "Contact Sensor"
+		capability "Alarm"
+		//capability "Contact Sensor"
 		capability "Polling"
         capability "Button"
         capability "Holdable Button"
@@ -67,7 +67,7 @@ metadata {
             	tileAttribute("device.lastMotion", key: "SECONDARY_CONTROL") {
     				attributeState("default", label:'Last Motion: ${currentValue}')
             }
-		}/*
+		}
 		valueTile("illuminance", "device.illuminance", width: 2, height: 2) {
 			state("illuminance", label:'${currentValue}', //unit:"lux",
 				backgroundColors:[
@@ -76,7 +76,10 @@ metadata {
 					[value: 1000, color: "#fbd41b"]
 				]
 			)
-		}    */    
+		}        
+        valueTile("temperature1", "device.temperature1", width: 1, height: 1) {
+			state("temperature1", label:'${currentValue}°')
+		}
         valueTile("temperature", "device.temperature", width: 2, height: 2) {
 			state("temperature", label:'${currentValue}°', 
 				backgroundColors:[
@@ -90,31 +93,45 @@ metadata {
 				]
 			)
 		}
-        valueTile("humidity", "device.humidity", inactiveLabel: false, width: 2, height: 2) {
-			state("humidity", label:'${currentValue}%', unit:"%", defaultState: true,
-                    backgroundColors:[
-                	[value: 10, color: "#ffffff"],
-					[value: 20, color: "#edf1ff"],
-					[value: 30, color: "#d3deff"],
-                    [value: 35, color: "#beccf4"],
-					[value: 40, color: "#a3baff"],
-                    [value: 45, color: "#93aeff"],
-					[value: 50, color: "#87a5ff"],
-					[value: 65, color: "#517cff"],
-					[value: 80, color: "#0041ff"]
-                ])
-		}/*
+        valueTile("temperature3", "device.temperature3", width: 1, height: 1) {
+			state("temperature3", label:'${currentValue}°')
+		}
+        valueTile("humidity", "device.humidity", inactiveLabel: false) {
+			state "humidity", label:'${currentValue}%', unit:""
+		}
 		standardTile("water", "device.water", width: 2, height: 2) {
-			state "dry", label:'Dry', icon:"st.Weather.weather12", backgroundColor:"#767676"
-			state "wet", label:'Wet', icon:"st.alarm.water.dry", backgroundColor:"#53a7c0"
-		} 
+			state "dry", icon:"st.alarm.water.dry", backgroundColor:"#ffffff"
+			state "wet", icon:"st.alarm.water.wet", backgroundColor:"#53a7c0"
+		} /*
 		standardTile("motion", "device.motion", width: 1, height: 1) {
 			state("active", label:'motion', icon:"st.motion.motion.active", backgroundColor:"#ffa81e")
 			state("inactive", label:'no motion', icon:"st.motion.motion.inactive", backgroundColor:"#ffffff")
 		} */
+        standardTile("switch", "device.switch", width: 2, height: 2, canChangeIcon: true) {
+			state "off", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
+			state "on", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#79b821"
+		}
 
 		standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat") {
 			state "configure", label:'', action:"configuration.configure", icon:"st.secondary.configure"
+		}
+		standardTile("contact", "device.contact", width: 2, height: 2) {
+			state("open", label:'${name}', icon:"st.contact.contact.open", backgroundColor:"#ffa81e")
+			state("closed", label:'${name}', icon:"st.contact.contact.closed", backgroundColor:"#79b821")
+		}
+		standardTile("alarm", "device.alarm", width: 2, height: 2) {
+			state "off", label:'off', action:'alarm.siren', icon:"st.alarm.alarm.alarm", backgroundColor:"#ffffff"
+            state "strobe", label:'', action:'alarmoff', icon:"st.secondary.strobe", backgroundColor:"#cccccc"
+            state "siren", label:'siren!', action:'alarmoff', icon:"st.alarm.beep.beep", backgroundColor:"#e86d13"
+			state "both", label:'alarm!', action:'alarmoff', icon:"st.alarm.alarm.alarm", backgroundColor:"#e86d13"
+		}
+
+		standardTile("test", "device.alarm", inactiveLabel: false, decoration: "flat") {
+			state "default", label:'', action:"test", icon:"st.secondary.test"
+		}
+        
+		standardTile("off", "device.alarm", width: 2, height: 2) {
+			state "default", label:'Alarm', action:"alarmoff", icon:"st.secondary.off"
 		}
 		//standardTile("off", "device.alarm", inactiveLabel: false, decoration: "flat") {
 		//	state "default", label:'', action:"alarmoff", icon:"st.secondary.off"
@@ -128,12 +145,8 @@ metadata {
         valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 4, height: 1) {
 			state "default", label:'Check in: ${currentValue}'
 		}
-        standardTile("contact", "device.contact", width: 2, height: 2) {
-            state("open", label:'Dry', icon:"st.Weather.weather12", backgroundColor:"#767676")
-			state("closed", label:'Wet', icon:"st.alarm.water.dry", backgroundColor:"#53a7c0")
-		}
-        main(["temperature","motion","humidity","illuminance","water","contact"])
-        details(["motion","temperature","humidity","contact","lastcheckin"])//,"rightDoor"
+        main(["temperature","motion","humidity","illuminance","switch","contact","alarm","water"])
+        details(["motion","temperature","illuminance","contact","switch","lastcheckin"])//,"rightDoor"
 	}
 }
 
@@ -166,12 +179,16 @@ def parse(String description) {
 			//log.debug "In parse:  name = ${name}, value = ${value}, btnName = ${btnName}, btnNum = ${btnNum}"
         	results = createEvent([name: btnName, value: value, data: [buttonNumber: btnNum], descriptionText: "${btnName} ${btnNum} was ${value} ", isStateChange: true, displayed: true])
         }
-        else if (name.startsWith("motion") && value.startsWith("active")) {
-        	now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-        	sendEvent(name: "lastMotion", value: now, descriptionText: "")
+        /*else if (name.startsWith("illuminance")) {
+        	name  = parts[0]
+            value = ((parts[1] as Double)*3.4)/1024
             results = createEvent(name: name, value: value)
-        }
+        }*/
         else {
+        	if (name.startsWith("motion") && value.startsWith("active")) {
+        		now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
+        		sendEvent(name: "lastMotion", value: now, descriptionText: "")
+            }
     		results = createEvent(name: name, value: value)
 		}
 
