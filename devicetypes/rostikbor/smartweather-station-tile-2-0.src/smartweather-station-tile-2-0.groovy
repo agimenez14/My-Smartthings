@@ -26,6 +26,7 @@ metadata {
 		capability "Ultraviolet Index"
         capability "Energy Meter"
 		capability "Power Meter"
+		capability "Water Sensor"
 
 		attribute "localSunrise", "string"
 		attribute "localSunset", "string"
@@ -37,7 +38,6 @@ metadata {
         attribute "wind_gust", "string"
         attribute "winddirection_deg", "string"
         attribute "windinfo", "string"
-        attribute "water", "string"
 		attribute "weatherIcon", "string"
 		attribute "forecastIcon", "string"
 		attribute "feelsLike", "string"
@@ -222,8 +222,8 @@ metadata {
         }
         standardTile("water", "device.water", inactiveLabel: false, width: 1, height: 1, decoration: "flat", wordWrap: true) {
             state "default", label: 'updating...', icon: "st.unknown.unknown.unknown"
-            state "true",        icon: "st.alarm.water.wet",        backgroundColor:"#ff9999"
-            state "false",       icon: "st.alarm.water.dry",        backgroundColor:"#99ff99"
+            state "wet",        icon: "st.alarm.water.wet",        backgroundColor:"#ff9999"
+            state "dry",       icon: "st.alarm.water.dry",        backgroundColor:"#99ff99"
         }
         valueTile("dewpoint", "device.dewpoint", inactiveLabel: false, width: 2, height: 1, decoration: "flat", wordWrap: true) {
 			state "default", label:'Dewpoint\n${currentValue}°'
@@ -399,10 +399,10 @@ def poll() {
             }                  
             
         // Since precip_1hr_in is a string, we need to convert it to a decimal in order to compare it as a number.
-        if (obs.precip_1hr_in.toFloat() > 0) {
-            sendEvent( name: 'water', value: "true" )
+        if (obs.precip_today_in.toFloat() > 0.01) {
+            sendEvent( name: 'water', value: "wet" )
         } else {
-            sendEvent( name: 'water', value: "false" )
+            sendEvent( name: 'water', value: "dry" )
         }
 
 		if (obs.local_tz_offset != device.currentValue("timeZoneOffset")) {

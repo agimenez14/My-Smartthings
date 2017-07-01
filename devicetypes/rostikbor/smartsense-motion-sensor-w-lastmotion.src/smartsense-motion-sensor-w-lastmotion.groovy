@@ -88,7 +88,7 @@ metadata {
 		valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
 			state "default", label:'Last Checkin: ${currentValue}'
 		}
-		main(["motion", "temperature"])
+		main(["temperature", "motion"])
 		details(["motion", "temperature", "battery", "refresh", "lastcheckin"])
 	}
 }
