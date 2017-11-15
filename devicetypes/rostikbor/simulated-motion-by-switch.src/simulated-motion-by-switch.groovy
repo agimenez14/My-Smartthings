@@ -28,8 +28,14 @@ metadata {
     				attributeState("default", label:'Last Motion: ${currentValue}')
             }
 		}
+        standardTile("on", "device.switch", decoration: "flat", width: 1, height: 1) {
+				state "default", label: 'on', action: "on", backgroundColor: "#ffffff"
+        }
+        standardTile("off", "device.switch", decoration: "flat", width: 1, height: 1) {
+                state "default", label: 'off', action: "off", backgroundColor: "#ffffff"
+        }
         main (["motion"])
-		details (["motion"])
+		details (["motion","on","off"])
 	}
 }
 

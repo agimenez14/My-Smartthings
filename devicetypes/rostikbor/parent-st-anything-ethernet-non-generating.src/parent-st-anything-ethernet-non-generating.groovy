@@ -55,7 +55,7 @@ metadata {
 			state "configure", label:'Configure', action:"configuration.configure", icon:"st.secondary.tools"
 		}
         valueTile("battery", "device.battery", inactiveLabel: false, decoration: "flat", width: 2, height: 1) {
-			state "battery", label:'${currentValue}%'
+			state "battery", label:'${currentValue}%', icon:"st.shields.shields.arduino"
 		}
 		childDeviceTiles("all")
         main(["battery"])
@@ -86,7 +86,8 @@ def parse(String description) {
         
 		if (name.startsWith("button")) {
 			//log.debug "In parse:  name = ${name}, value = ${value}, btnName = ${name}, btnNum = ${namemun}"
-        	results = createEvent([name: namebase, value: value, data: [buttonNumber: namenum], descriptionText: "${namebase} ${namenum} was ${value} ", isStateChange: true, displayed: true])
+        	//results = createEvent([name: namebase, value: value, data: [buttonNumber: namenum], descriptionText: "${namebase} ${namenum} was ${value} ", isStateChange: true, displayed: true])
+			results = createEvent([name: namebase, value: value, data: [buttonNumber: namenum], descriptionText: "${namebase} ${namenum} was ${value} ", isStateChange: true, displayed: true])
 			log.debug results
 			return results
         }

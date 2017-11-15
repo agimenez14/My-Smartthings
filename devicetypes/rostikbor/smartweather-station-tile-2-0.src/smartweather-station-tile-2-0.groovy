@@ -52,7 +52,7 @@ metadata {
         attribute "wind_degrees", "string"
         attribute "pressure", "string"
         attribute "solarradiation", "string"
-        attribute "visibility", "string"
+        attribute "visibility", "number"
         attribute "pressureTrend", "string"
         
 		command "refresh"
@@ -336,17 +336,17 @@ def poll() {
         if (dist_units) {
                 switch (dist_units) {
                     case "dist_mi" :
-                        send(name: "visibility", value: "${obs.visibility_mi} mi.")
+                        send(name: "visibility", value: "${obs.visibility_mi as Integer}")
                     break;
 
                     case "dist_km":
-                        send(name: "visibility", value: "${obs.visibility_km} km")
+                        send(name: "visibility", value: "${obs.visibility_km as Integer}")
                     break;
                     default:
-                        send(name: "visibility", value: "${obs.visibility_mi} mi.")
+                        send(name: "visibility", value: "${obs.visibility_mi as Integer}")
                 }
             } else {
-                send(name: "visibility", value: "${obs.visibility_mi} mi.")
+                send(name: "visibility", value: "${obs.visibility_mi as Integer}")
             }      
             
         if (height_units) {
