@@ -48,7 +48,7 @@ metadata {
 		attribute "alertKeys", "string"
 		attribute "sunriseDate", "string"
 		attribute "sunsetDate", "string"
-        attribute "dewpoint", "string"
+        attribute "dewpoint", "number"
         attribute "wind_degrees", "string"
         attribute "pressure", "string"
         attribute "solarradiation", "string"

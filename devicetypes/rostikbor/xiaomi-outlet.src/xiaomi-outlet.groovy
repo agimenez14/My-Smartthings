@@ -83,10 +83,10 @@ def parse(String description) {
    
    //  send event for heartbeat    
    def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-   sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in")
+   sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in", displayed: false)
    //refresh.refresh   
    if (description?.startsWith('on/off: 1')){
-   		sendEvent(name: "lastOn", value: now, descriptionText: "")
+   		sendEvent(name: "lastOn", value: now, descriptionText: "", displayed: false)
     }
     
    if (description?.startsWith('catchall:')) {
@@ -137,14 +137,15 @@ private Map parseReportAttributeMessage(String description) {
 		resultMap = getBatteryResult(Integer.parseInt(descMap.value, 16))
 	}
     if (descMap.cluster == "0002" && descMap.attrId == "0000") {
-        sendEvent(name: "rawT", value: descMap.value)
+        sendEvent(name: "rawT", value: descMap.value, displayed: false)
         //
     	//def temp = ((descMap.value.toDouble() * 1.8) + 33).toInteger()
         //if (temp < 50)
-        def temp = Math.round(((Integer.parseInt(descMap.value,16) / 2.0 + 7) * 1.8) + 33)//.toInteger()
+        //def temp = Math.round(((Integer.parseInt(descMap.value,16) / 2.0 + 7) * 1.8) + 33)//.toInteger()
+        def temp = (((Integer.parseInt(descMap.value,16) / 2.0 + 6.5)* 1.8) + 33).toInteger()
 		resultMap = createEvent(name: "temperature", value: temp, unit: getTemperatureScale())
 		def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-   		sendEvent(name: "lastTemp", value: now, descriptionText: "Last Temp")
+   		sendEvent(name: "lastTemp", value: now, descriptionText: "Last Temp", displayed: false)
     }
     else if (descMap.cluster == "0008" && descMap.attrId == "0000") {
     	resultMap = createEvent(name: "switch", value: "off")

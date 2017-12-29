@@ -32,7 +32,7 @@ metadata {
    fingerprint profileId: "0104", deviceId: "0104", inClusters: "0000, 0003", outClusters: "0000, 0004, 0003, 0006, 0008, 0005", manufacturer: "LUMI", model: "lumi.sensor_magnet", deviceJoinName: "Xiaomi Door Sensor"
    
    command "enrollResponse"
- 
+   command "forceClose"
    }
    preferences
    {
@@ -68,8 +68,11 @@ metadata {
       standardTile("configure", "device.configure", inactiveLabel: false, width: 2, height: 2, decoration: "flat") {
 			state "configure", label:'', action:"configuration.configure", icon:"st.secondary.configure"
 	  }
+      standardTile("fclose", "device.fclose", inactiveLabel: false, decoration: "flat", width: 1, height: 1) {
+            state "default", action:"forceClose", icon:"st.contact.contact.closed"
+      }
       main (["contact"])
-      details(["contact","battery","configure","refresh", "lastcheckin"])
+      details(["contact","battery","configure","refresh", "lastcheckin","fclose"])
    }
 }
 
@@ -78,10 +81,10 @@ def parse(String description) {
    
    //  send event for heartbeat    
    def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-   sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in")
+   sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in", displayed: false)
    
    if (description?.startsWith('on/off: 1')) {
-   		sendEvent(name: "lastOpen", value: now, descriptionText: "")
+   		sendEvent(name: "lastOpen", value: now, descriptionText: "", displayed: false)
    }
    
    Map map = [:]
@@ -253,4 +256,8 @@ private byte[] reverseArray(byte[] array) {
 	}
 
 	return array
+}
+
+def forceClose() {
+	sendEvent(name:"contact", value:"closed", descriptionText: "manual close")
 }

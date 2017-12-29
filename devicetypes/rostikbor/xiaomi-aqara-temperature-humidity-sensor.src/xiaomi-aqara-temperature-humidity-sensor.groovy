@@ -25,7 +25,7 @@
  *
  */
 metadata {
-	definition (name: "Xiaomi Temperature Humidity Sensor", namespace: "RostikBor", author: "RostikBor") {
+	definition (name: "Xiaomi Aqara Temperature Humidity Sensor", namespace: "RostikBor", author: "RostikBor") {
 		capability "Temperature Measurement"
 		capability "Relative Humidity Measurement"
 		capability "Sensor"
@@ -33,6 +33,7 @@ metadata {
         capability "Refresh"
         
         attribute "lastCheckin", "String"
+        attribute "pressure", "number"
         
 		fingerprint profileId: "0104", deviceId: "0302", inClusters: "0000,0001,0003,0009,0402,0405"
 	}
@@ -55,6 +56,13 @@ metadata {
 		section {
 			input title: "Temperature Offset", description: "This feature allows you to correct any temperature variations by selecting an offset. Ex: If your sensor consistently reports a temp that's 5 degrees too warm, you'd enter '-5'. If 3 degrees too cold, enter '+3'. Please note, any changes will take effect only on the NEXT temperature change.", displayDuringSetup: false, type: "paragraph", element: "paragraph"
 			input "tempOffset", "number", title: "Degrees", description: "Adjust temperature by this many degrees", range: "*..*", displayDuringSetup: false
+		}
+        section {
+            input name: "PressureUnits", type: "enum", title: "Pressure Units", options: ["mbar", "kPa", "inHg", "mmHg"], description: "Sets the unit in which pressure will be reported", defaultValue: "mbar", displayDuringSetup: true, required: true
+		} 
+		section {
+            input title: "Pressure Offset", description: "This feature allows you to correct any pressure variations by selecting an offset. Ex: If your sensor consistently reports a pressure that's 5 too high, you'd enter '-5'. If 3 too low, enter '+3'. Please note, any changes will take effect only on the NEXT pressure change.", displayDuringSetup: false, type: "paragraph", element: "paragraph"
+            input "pressOffset", "number", title: "Pressure", description: "Adjust prssure by this many units", range: "*..*", displayDuringSetup: false
 		}
     }
     
@@ -87,7 +95,7 @@ metadata {
 					[value: 80, color: "#0041ff"]
                 ]
 		}
-        valueTile("temperatureC", "device.temperatureC", width: 2, height: 2) {
+        valueTile("temperatureC", "device.temperatureC", width: 2, height: 1) {
 			state "temperatureC", label:'${currentValue}°C'/*,
 				backgroundColors:[
 					[value: 14.4, color: "#153591"],
@@ -114,8 +122,11 @@ metadata {
 		standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "default", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
+        valueTile("pressure", "device.pressure", inactiveLabel: false, decoration: "flat", width: 2, height: 1) {
+			state "default", label:'${currentValue}'
+		}
 		main(["temperature", "humidity"])
-		details(["temperature", "humidity", "temperatureC","lasttemp","battery","lasthumid","lastcheckin"])
+		details(["temperature", "humidity", "temperatureC","pressure","lasttemp","lasthumid","battery","lastcheckin"])
 	}
 }
 
@@ -137,7 +148,7 @@ def parse(String description) {
     
     if (name == "temperature"){    	
     	def celsius = ((value.toDouble() - 32) * 0.5556)
-    	sendEvent(name: "temperatureC", value: celsius)
+    	sendEvent(name: "temperatureC", value: celsius, displayed: false)
         // temp heartbeat
         now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
     	sendEvent(name: "lastTemp", value: now, descriptionText: "", displayed: false)
@@ -151,6 +162,7 @@ def parse(String description) {
 
 private String parseName(String description) {
 
+
 	if (description?.startsWith("temperature: ")) {
 		return "temperature"
         
@@ -158,9 +170,24 @@ private String parseName(String description) {
 		return "humidity"
         
 	} else if (description?.startsWith("catchall: ")) {
-		return "battery"
-	}
-	null
+        return "battery"
+        
+	} else if (description?.startsWith("read attr - raw: "))
+    {
+ 	   def attrId        
+ 	   attrId = description.split(",").find {it.split(":")[0].trim() == "attrId"}?.split(":")[1].trim()
+
+		if(attrId == "0000")
+        {
+        	return "pressure"
+        
+    	} else if (attrId == "0005")
+        {
+        	return "model"
+        
+    	}
+    }
+	return null
 }
 
 private String parseValue(String description) {
@@ -200,11 +227,73 @@ private String parseValue(String description) {
 		}
 	} else if (description?.startsWith("catchall: ")) {
 		return parseCatchAllMessage(description)
-	} else {
-    log.debug "unknown: $description"
+        
+	}  else if (description?.startsWith("read attr - raw: ")){
+        return parseReadAttrMessage(description)
+        
+    }else {
+    log.debug "${linkText} unknown: $description"
     sendEvent(name: "unknown", value: description)
     }
 	null
+}
+
+private String parseReadAttrMessage(String description) {
+    def result = '--'
+    def cluster
+    def attrId
+    def value
+    def linkText = getLinkText(device)
+    cluster = description.split(",").find {it.split(":")[0].trim() == "cluster"}?.split(":")[1].trim()
+    attrId = description.split(",").find {it.split(":")[0].trim() == "attrId"}?.split(":")[1].trim()
+    value = description.split(",").find {it.split(":")[0].trim() == "value"}?.split(":")[1].trim()
+    
+    
+    if (cluster == "0403" && attrId == "0000") {
+         result = value[0..3]
+         float pressureval = Integer.parseInt(result, 16)
+         log.debug "${linkText}: Converting ${pressureval} to ${PressureUnits}"
+         
+         switch (PressureUnits)
+         {
+         case "mbar":
+         	pressureval = (pressureval/10) as Float
+            pressureval = pressureval.round(1);
+         	break;
+         case "kPa":
+         	pressureval = (pressureval/100) as Float
+            pressureval = pressureval.round(2);
+            break;
+         case "inHg":
+         	pressureval = (((pressureval/10) as Float) * 0.0295300)
+            pressureval = pressureval.round(2);
+            break;
+         case "mmHg":
+         	pressureval = (((pressureval/10) as Float) * 0.750062)
+            pressureval = pressureval.round(2);
+            break;
+         }
+         
+         log.debug "${linkText}: ${pressureval} ${PressureUnits} before applying the pressure offset."
+         
+         if (pressOffset)
+         {
+           pressureval = (pressureval + pressOffset)
+           pressureval = pressureval.round(2);
+         }
+         
+         result = pressureval
+    } 
+    else if (cluster == "0000" && attrId == "0005") 
+    {
+        for (int i = 0; i < value.length(); i+=2) 
+        {
+            def str = value.substring(i, i+2);
+            def NextChar = (char)Integer.parseInt(str, 16);
+            result = result + NextChar
+        }
+    }
+    return result
 }
 
 private String parseCatchAllMessage(String description) {
@@ -214,7 +303,10 @@ private String parseCatchAllMessage(String description) {
 	if (cluster) {
 		switch(cluster.clusterId) {
 			case 0x0000:
-			result = getBatteryResult(cluster.data.get(6)) 
+			if ((cluster.data.get(4) == 1) && (cluster.data.get(5) == 0x21))  // Check CMD and Data Type
+            {
+              result = getBatteryResult((cluster.data.get(7)<<8) + cluster.data.get(6))
+            }
  			break
 		}
 	}
@@ -224,23 +316,27 @@ private String parseCatchAllMessage(String description) {
 
 
 private String getBatteryResult(rawValue) {
-	log.debug 'Battery'
-	def linkText = getLinkText(device)
-	log.debug rawValue
+    def linkText = getLinkText(device)
+    //log.debug '${linkText} Battery'
 
-	def result =  '--'
-    def maxBatt = 100
-    def battLevel = Math.round(rawValue * 100 / 255)
-	
-	if (battLevel > maxBatt) {
-				battLevel = maxBatt
-    }
+	//log.debug rawValue
 
-	return battLevel
+    def result ="--"
+    
+    def volts = rawValue / 1000
+    def minVolts = 2.0
+    def maxVolts = 3.055
+    def pct = (volts - minVolts) / (maxVolts - minVolts)
+    def roundedPct = Math.round(pct * 100)
+    pct = Math.min(100, roundedPct)
+    log.debug "${device.displayName} battery was ${pct}%, ${volts} volts"
+    result = pct.toString();
+    return result
 }
 
 def refresh() {
-	log.debug "refresh called"
+	def linkText = getLinkText(device)
+    log.debug "${linkText}: refresh called"
 	def refreshCmds = [
 		"st rattr 0x${device.deviceNetworkId} 1 1 0x00", "delay 2000",
 		"st rattr 0x${device.deviceNetworkId} 1 1 0x20", "delay 2000"

@@ -21,12 +21,11 @@
  */
 
 metadata {
-	definition (name: "Xiaomi Aqara Motion Sensor", namespace: "RostikBor", author: "RostikBor") {
+	definition (name: "Xiaomi Motion Sensor", namespace: "RostikBor", author: "RostikBor") {
 		capability "Motion Sensor"
 		capability "Configuration"
 		capability "Battery"
 		capability "Sensor"
-        capability "Illuminance Measurement"
         
         attribute "lastCheckin", "String"
         attribute "lastMotion", "String"
@@ -73,11 +72,8 @@ metadata {
         valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 4, height: 1) {
 			state "default", label:'Check in: ${currentValue}'
 		}
-        valueTile("illuminance", "device.illuminance", width: 2, height: 2) {
-			state "illuminance", label:'${currentValue}\nlux', unit:"lux"  
-        }
 		main(["motion"])
-		details(["motion", "illuminance", "battery", "refresh", "reset","lastcheckin"])
+		details(["motion", "configure", "battery", "refresh", "reset","lastcheckin"])
 	}
 }
 
@@ -91,10 +87,6 @@ def parse(String description) {
 	}
 	else if (description?.startsWith('read attr -')) {
 		map = parseReportAttributeMessage(description)
-	}
-    else if (description?.startsWith('illuminance')) {
-			//getLumminanceResult(description)
-            map = parseCustomMessage(description)
 	}
  
 	log.debug "Parse returned $map"
@@ -114,35 +106,27 @@ def parse(String description) {
 }
 
 private Map getBatteryResult(rawValue) {
+	log.debug 'Battery'
 	def linkText = getLinkText(device)
-    def result = [
+
+	log.debug rawValue
+
+	def result = [
 		name: 'battery',
-		value: '--',
-        unit: "%",
-        translatable: true
-    ]
+		value: '--'
+	]
     
-    def rawVolts = rawValue / 1000
+	def volts = rawValue / 1
+	def maxVolts = 100
 
-	def maxBattery = state.maxBattery ?: 0
-    def minBattery = state.minBattery ?: 0
+	if (volts > maxVolts) {
+		volts = maxVolts
+    	}
+	
+    	result.value = volts
+	result.descriptionText = "${linkText} battery was ${result.value}%"
 
-	if (maxBattery == 0 || rawVolts > minBattery)
-    	state.maxBattery = maxBattery = rawVolts
-        
-    if (minBattery == 0 || rawVolts < minBattery)
-    	state.minBattery = minBattery = rawVolts
-    
-    def volts = (maxBattery + minBattery) / 2
-
-	def minVolts = 2.7
-    def maxVolts = 3.0
-    def pct = (volts - minVolts) / (maxVolts - minVolts)
-    def roundedPct = Math.round(pct * 100)
-    result.value = Math.min(100, roundedPct)
-    result.descriptionText = "${linkText}: raw battery is ${rawVolts}v, state: ${volts}v, ${minBattery}v - ${maxBattery}v"
-    
-    return result
+	return result
 }
 
 private Map parseCatchAllMessage(String description) {
@@ -152,10 +136,7 @@ private Map parseCatchAllMessage(String description) {
 	if (shouldProcessMessage(cluster)) {
 		switch(cluster.clusterId) {
 			case 0x0000:
-			if ((cluster.data.get(4) == 1) && (cluster.data.get(5) == 0x21))  // Check CMD and Data Type
-            {
-              result = getBatteryResult((cluster.data.get(7)<<8) + cluster.data.get(6))
-            }
+			resultMap = getBatteryResult(cluster.data.last())
 			break
 
 			case 0xFC02:
@@ -167,7 +148,6 @@ private Map parseCatchAllMessage(String description) {
 				// temp is last 2 data values. reverse to swap endian
 				String temp = cluster.data[-2..-1].reverse().collect { cluster.hex1(it) }.join()
 				def value = getTemperature(temp)
-        		sendEvent(name: "temperature", value: getTemperatureResult(value), descriptionText: "")
 				resultMap = getTemperatureResult(value)
 				break
 		}
@@ -234,11 +214,11 @@ private Map parseReportAttributeMessage(String description) {
 	//log.debug "Desc Map: $descMap"
  
 	Map resultMap = [:]
-	/*
+
 	if (descMap.cluster == "0001" && descMap.attrId == "0020") {
 		resultMap = getBatteryResult(Integer.parseInt(descMap.value, 16))
-	}*/
-    if (descMap.cluster == "0406" && descMap.attrId == "0000") {
+	}
+    else if (descMap.cluster == "0406" && descMap.attrId == "0000") {
     	def value = descMap.value.endsWith("01") ? "active" : "inactive"
         def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
         	sendEvent(name: "lastMotion", value: now, descriptionText: "", displayed: false)
@@ -251,29 +231,7 @@ private Map parseReportAttributeMessage(String description) {
  
 private Map parseCustomMessage(String description) {
 	Map resultMap = [:]
-    if (description?.startsWith('illuminance: ')) {
-   // log.info "value: " + description.split(": ")[1]
-            //log.warn "proc: " + value
-
-		//def value = zigbee.lux( description.split(": ")[1] as Integer ) //zigbee.parseHAIlluminanceValue(description, "illuminance: ", getTemperatureScale())
-		def value = description.split(": ")[1]
-        resultMap = getLuminanceResult(value)
-	}
 	return resultMap
-}
-
-private Map getLuminanceResult(rawValue) {
-	log.debug "Luminance rawValue = ${rawValue}"
-
-	def result = [
-		name: 'illuminance',
-		value: '--',
-		translatable: true,
- 		unit: 'lux'
-	]
-    
-    result.value = rawValue as Integer
-    return result
 }
 
 private Map parseIasMessage(String description) {

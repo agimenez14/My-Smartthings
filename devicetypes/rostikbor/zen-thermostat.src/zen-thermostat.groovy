@@ -264,7 +264,7 @@ def setpointUp()
     def currentUnit = getTemperatureScale()
     
     // check if heating or cooling setpoint needs to be changed
-    double nextLevel = device.currentValue("thermostatSetpoint") + 1.0
+    double nextLevel = device.currentValue("thermostatSetpoint") + 0.5
 	log.debug "Next level: $nextLevel"
 
     // check the limits
@@ -312,7 +312,7 @@ def setpointDown()
     def currentUnit = getTemperatureScale()
     
     // check if heating or cooling setpoint needs to be changed
-    double nextLevel = device.currentValue("thermostatSetpoint") - 1.0
+    double nextLevel = device.currentValue("thermostatSetpoint") - 0.5
     
     // check the limits
     if (currentUnit == "C")
@@ -360,7 +360,7 @@ def setSetpoint(degrees)
     def currentMode = device.currentState("thermostatMode")?.value
 	
     def degreesDouble = degrees as Double
-	sendEvent("name":"thermostatSetpoint", "value":Math.round(degreesDouble))
+	sendEvent("name":"thermostatSetpoint", "value":degreesDouble)
     log.debug "New set point: $degreesDouble"
 	
 	def celsius = (getTemperatureScale() == "C") ? degreesDouble : (fahrenheitToCelsius(degreesDouble) as Double).round(1)
@@ -378,7 +378,7 @@ def setHeatingSetpoint(degrees) {
 	
 	def degreesDouble = degrees as Double
 	log.debug "setHeatingSetpoint({$degreesDouble} ${temperatureScale})"
-	sendEvent("name":"heatingSetpoint", "value":Math.round(degreesDouble))
+	sendEvent("name":"heatingSetpoint", "value":degreesDouble) //Math.round(degreesDouble))
 	
 	def celsius = (temperatureScale == "C") ? degreesDouble : (fahrenheitToCelsius(degreesDouble) as Double).round(1)
 	"st wattr 0x${device.deviceNetworkId} 1 0x201 0x12 0x29 {" + hex(celsius*100.0) + "}"
@@ -389,7 +389,7 @@ def setCoolingSetpoint(degrees) {
     
 	def degreesDouble = degrees as Double
 	log.debug "setCoolingSetpoint({$degreesDouble} ${temperatureScale})"
-	sendEvent("name":"coolingSetpoint", "value":Math.round(degreesDouble))
+	sendEvent("name":"coolingSetpoint", "value":degreesDouble) //Math.round(degreesDouble))
     
 	def celsius = (temperatureScale == "C") ? degreesDouble : (fahrenheitToCelsius(degreesDouble) as Double).round(1)
 	"st wattr 0x${device.deviceNetworkId} 1 0x201 0x11 0x29 {" + hex(celsius*100.0) + "}"

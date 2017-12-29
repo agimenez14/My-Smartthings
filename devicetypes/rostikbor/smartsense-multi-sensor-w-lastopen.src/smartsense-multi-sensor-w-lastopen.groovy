@@ -29,6 +29,7 @@ metadata {
 		capability "Health Check"
 
  		command "enrollResponse"
+        command "forceClose"
  		fingerprint inClusters: "0000,0001,0003,0402,0500,0020,0B05,FC02", outClusters: "0019", manufacturer: "CentraLite", model: "3320"
 		fingerprint inClusters: "0000,0001,0003,0402,0500,0020,0B05,FC02", outClusters: "0019", manufacturer: "CentraLite", model: "3321"
 		fingerprint inClusters: "0000,0001,0003,0402,0500,0020,0B05,FC02", outClusters: "0019", manufacturer: "CentraLite", model: "3321-S", deviceJoinName: "Multipurpose Sensor"
@@ -114,18 +115,21 @@ metadata {
 		valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
 			state "default", label:'Last Checkin: ${currentValue}'
 		}
+        standardTile("fclose", "device.fclose", inactiveLabel: false, decoration: "flat", width: 1, height: 1) {
+            state "default", action:"forceClose", icon:"st.contact.contact.closed"
+        }
 		main(["status", "acceleration", "temperature"])
-		details(["status", "acceleration", "temperature", "battery", "lastcheckin"])
+		details(["status", "acceleration", "temperature", "battery", "lastcheckin","fclose"])
 	}
  }
 
 def parse(String description) {
 	//  send event for heartbeat    
     def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-    sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in")
+    sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in", displayed: false)
    
 	if (device.latestValue("status") == "garage-open" || device.latestValue("status") == "open") {
-    sendEvent(name: "lastOpen", value: now, descriptionText: "")
+    sendEvent(name: "lastOpen", value: now, descriptionText: "", displayed: false)
     }
 
 	Map map = [:]
@@ -549,4 +553,9 @@ private byte[] reverseArray(byte[] array) {
 		i++;
 	}
 	return array
+}
+
+def forceClose() {
+	sendEvent(name:"contact", value:"closed", descriptionText: "manual close")
+    sendEvent(name: 'status', value:"closed", descriptionText: "manual close")
 }

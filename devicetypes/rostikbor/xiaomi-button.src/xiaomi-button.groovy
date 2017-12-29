@@ -64,7 +64,7 @@ metadata {
 def parse(String description) {
   //  send event for heartbeat    
    def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-   sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in")
+   sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in", displayed: false)
 
   log.debug "Parsing '${description}'"
   def value = zigbee.parse(description)?.text
@@ -169,7 +169,7 @@ private createButtonEvent(button) {
     }
     else
     {
-    	sendEvent(name: "lastPressed", value: now, descriptionText: "")
+    	sendEvent(name: "lastPressed", value: now, descriptionText: "", displayed: false)
     	return createEvent(name: "button", value: "held", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was held", isStateChange: true)
 	}
 }

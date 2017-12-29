@@ -97,10 +97,10 @@ def parse(String description) {
 	log.debug "description: $description"
     
 	def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-    sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in")
+    sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in", displayed: false)
    
 	if (description?.startsWith('zone status')) {
-    sendEvent(name: "lastMotion", value: now, descriptionText: "")
+    sendEvent(name: "lastMotion", value: now, descriptionText: "", displayed: false)
     }
 
 	Map map = [:]
