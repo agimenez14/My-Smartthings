@@ -82,7 +82,7 @@ def parse(String description) {
    Map map = [:]
    
    //  send event for heartbeat    
-   def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
+   def now = new Date().format("MMM d h:mm a", location.timeZone)
    sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in", displayed: false)
    //refresh.refresh   
    if (description?.startsWith('on/off: 1')){
@@ -144,7 +144,7 @@ private Map parseReportAttributeMessage(String description) {
         //def temp = Math.round(((Integer.parseInt(descMap.value,16) / 2.0 + 7) * 1.8) + 33)//.toInteger()
         def temp = (((Integer.parseInt(descMap.value,16) / 2.0 + 6.5)* 1.8) + 33).toInteger()
 		resultMap = createEvent(name: "temperature", value: temp, unit: getTemperatureScale())
-		def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
+		def now = new Date().format("MMM d h:mm a", location.timeZone)
    		sendEvent(name: "lastTemp", value: now, descriptionText: "Last Temp", displayed: false)
     }
     else if (descMap.cluster == "0008" && descMap.attrId == "0000") {

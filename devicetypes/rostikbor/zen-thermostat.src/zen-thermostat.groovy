@@ -31,8 +31,8 @@ metadata {
   // simulator metadata
   simulator { }
 
-  tiles {
-        valueTile("frontTile", "device.temperature", width: 1, height: 1) {
+  tiles(scale: 2) {
+        valueTile("frontTile", "device.temperature", width: 2, height: 2) {
             state "temperature", label:'${currentValue}°', //icon:"st.Home.home1",
 			backgroundColors:[
 				[value: 32, color: "#153591"],
@@ -45,7 +45,7 @@ metadata {
 			]
 		}
     
-        valueTile("temperature", "device.temperature", width: 1, height: 1) {
+        valueTile("temperature", "device.temperature", width: 2, height: 2) {
 			state "temperature", label:'${currentValue}°' ,
 			backgroundColors:[
 				[value: 32, color: "#153591"],
@@ -58,13 +58,13 @@ metadata {
 			]
 		}
         
-        standardTile("fanMode", "device.thermostatFanMode", decoration: "flat") {
+        standardTile("fanMode", "device.thermostatFanMode", decoration: "flat", width: 2, height: 2) {
             state "fanAuto", action:"thermostat.setThermostatFanMode", backgroundColor:"#ffffff", icon:"st.thermostat.fan-auto"
             state "fanOn", action:"thermostat.setThermostatFanMode", backgroundColor:"#aef2b5", icon:"st.thermostat.fan-on"
         }
         
         
-        standardTile("mode", "device.thermostatMode", decoration: "flat") {
+        standardTile("mode", "device.thermostatMode", decoration: "flat", width: 2, height: 2) {
             state "off", action:"setThermostatMode", backgroundColor:"#ffffff", icon:"st.thermostat.heating-cooling-off", nextState:"heating"
             state "heat", action:"setThermostatMode", backgroundColor:"#e86d13", icon:"st.thermostat.heat", nextState:"cooling"
             state "cool", action:"setThermostatMode", backgroundColor:"#00A0DC", icon:"st.thermostat.cool", nextState:"..."
@@ -74,40 +74,43 @@ metadata {
             state "...", action:"off", nextState:"off"
         }
         
-        valueTile("thermostatSetpoint", "device.thermostatSetpoint", width: 2, height: 2) {
+        valueTile("thermostatSetpoint", "device.thermostatSetpoint", width: 4, height: 4) {
             state "off", label:'${currentValue}°', unit: "C", backgroundColor:"#e8e3d8"
             state "heat", label:'${currentValue}°', unit: "C", backgroundColor:"#e8e3d8"
             state "cool", label:'${currentValue}°', unit: "C", backgroundColor:"#e8e3d8"
         }
-        valueTile("heatingSetpoint", "device.heatingSetpoint", inactiveLabel: false) {
+        valueTile("heatingSetpoint", "device.heatingSetpoint", inactiveLabel: false, width: 2, height: 2) {
 			state "heat", label:'${currentValue}° heat', unit:"F", backgroundColor:"#ffffff"
 		}
-        valueTile("coolingSetpoint", "device.coolingSetpoint", inactiveLabel: false) {
+        valueTile("coolingSetpoint", "device.coolingSetpoint", inactiveLabel: false, width: 2, height: 2) {
 			state "cool", label:'${currentValue}° cool', unit:"F", backgroundColor:"#ffffff"
 		}
-        standardTile("thermostatOperatingState", "device.thermostatOperatingState", inactiveLabel: false) {
+        standardTile("thermostatOperatingState", "device.thermostatOperatingState", inactiveLabel: false, width: 2, height: 2) {
             state "heating", backgroundColor:"#ff6e7e"
             state "cooling", backgroundColor:"#9bd8ef"
             state "fan only", backgroundColor:"#e8e3d8"
 		}
-        standardTile("setpointUp", "device.thermostatSetpoint", decoration: "flat") {
+        standardTile("setpointUp", "device.thermostatSetpoint", decoration: "flat", width: 2, height: 2) {
             state "setpointUp", action:"setpointUp", icon:"st.thermostat.thermostat-up"
         }
         
-        standardTile("setpointDown", "device.thermostatSetpoint", decoration: "flat") {
+        standardTile("setpointDown", "device.thermostatSetpoint", decoration: "flat", width: 2, height: 2) {
             state "setpointDown", action:"setpointDown", icon:"st.thermostat.thermostat-down"
         }
 
-        standardTile("refresh", "device.temperature", decoration: "flat") {
+        standardTile("refresh", "device.temperature", decoration: "flat", width: 1, height: 1) {
             state "default", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
         
-        standardTile("configure", "device.configure", decoration: "flat") {
+        standardTile("configure", "device.configure", decoration: "flat", width: 2, height: 2) {
             state "configure", label:'', action:"configuration.configure", icon:"st.secondary.configure"
         }
+        valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 4, height: 1) {
+			state "default", label:'Last Update: ${currentValue}'
+		}
 
       main "frontTile"
-      details(["temperature", "fanMode", "mode", "thermostatSetpoint", "setpointUp", "setpointDown","refresh", "configure"])
+      details(["temperature", "fanMode", "mode", "thermostatSetpoint", "setpointUp", "setpointDown","refresh", "lastcheckin"])
   }
 }
 
@@ -117,6 +120,9 @@ def parse(String description) {
     log.debug "Parse description $description"
     def map = [:]
     def activeSetpoint = "--"
+    
+    def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
+    sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in", displayed: false)
     
     if (description?.startsWith("read attr -")) 
     {

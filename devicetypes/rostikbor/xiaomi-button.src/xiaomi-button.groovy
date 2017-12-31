@@ -63,7 +63,7 @@ metadata {
 
 def parse(String description) {
   //  send event for heartbeat    
-   def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
+   def now = new Date().format("MMM d h:mm a", location.timeZone)
    sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in", displayed: false)
 
   log.debug "Parsing '${description}'"
@@ -158,7 +158,7 @@ private createButtonEvent(button) {
     def startOfPress = device.latestState('lastPress').date.getTime()
     def timeDif = currentTime - startOfPress
     def holdTimeMillisec = (settings.holdTime?:3).toInteger() * 1000
-    def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
+    def now = new Date().format("MMM d h:mm a", location.timeZone)
     
     if (timeDif < 0) 
     	return []	//likely a message sequence issue. Drop this press and wait for another. Probably won't happen...

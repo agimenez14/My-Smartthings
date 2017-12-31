@@ -93,7 +93,7 @@ def parse(String description) {
 	def result = map ? createEvent(map) : null
     
 //  send event for heartbeat    
-    def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
+    def now = new Date().format("MMM d h:mm a", location.timeZone)
     sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in", displayed: false)
     
     if (description?.startsWith('enroll request')) {
@@ -220,7 +220,7 @@ private Map parseReportAttributeMessage(String description) {
 	}
     else if (descMap.cluster == "0406" && descMap.attrId == "0000") {
     	def value = descMap.value.endsWith("01") ? "active" : "inactive"
-        def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
+        def now = new Date().format("MMM d h:mm a", location.timeZone)
         	sendEvent(name: "lastMotion", value: now, descriptionText: "", displayed: false)
         if (settings.motionReset == null || settings.motionReset == "" ) settings.motionReset = 120
         if (value == "active") runIn(settings.motionReset, stopMotion)

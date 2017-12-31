@@ -257,7 +257,7 @@ def motionEvent(value) {
 	if (value) {
 		map.value = "active"
 		map.descriptionText = "$device.displayName detected motion"
-        def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
+        def now = new Date().format("MMM d h:mm a", location.timeZone)
         sendEvent(name: "lastMotion", value: now, descriptionText: "", displayed: false)
 	} else {
 		map.value = "inactive"

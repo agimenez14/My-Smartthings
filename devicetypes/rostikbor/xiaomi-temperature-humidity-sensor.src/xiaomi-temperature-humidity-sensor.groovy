@@ -31,6 +31,7 @@ metadata {
 		capability "Sensor"
         capability "Battery"
         capability "Refresh"
+    	capability "Thermostat"
         
         attribute "lastCheckin", "String"
         
@@ -132,19 +133,17 @@ def parse(String description) {
     log.debug "Evencreated: $name, $value, $unit"
 	log.debug "Parse returned ${result?.descriptionText}"
     
-    def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
+    def now = new Date().format("MMM d h:mm a", location.timeZone)
     sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in", displayed: false)
     
     if (name == "temperature"){    	
     	def celsius = ((value.toDouble() - 32) * 0.5556)
     	sendEvent(name: "temperatureC", value: celsius)
         // temp heartbeat
-        now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
     	sendEvent(name: "lastTemp", value: now, descriptionText: "", displayed: false)
     } 
-    if (name == "humidity"){     
-    now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
-    sendEvent(name: "lastHumid", value: now, descriptionText: "", displayed: false)
+    if (name == "humidity"){  
+    	sendEvent(name: "lastHumid", value: now, descriptionText: "", displayed: false)
     }
 	return result
 }

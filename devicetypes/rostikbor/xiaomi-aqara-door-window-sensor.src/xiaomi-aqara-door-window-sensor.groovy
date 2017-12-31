@@ -98,7 +98,7 @@ def parse(String description) {
    def result = zigbee.getEvent(description)
    
 	//  send event for heartbeat    
-   def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
+   def now = new Date().format("MMM d h:mm a", location.timeZone)
    sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in", displayed: false)
     
    Map map = [:]

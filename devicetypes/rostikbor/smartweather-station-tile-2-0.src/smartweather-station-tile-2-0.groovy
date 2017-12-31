@@ -275,7 +275,7 @@ def poll() {
 	if (obs) {
         log.debug "obs --> ${obs}"
         def now = new Date().format('hh:mm:ss M.d.yyyy',location.timeZone)
-        sendEvent(name:"lastSTupdate", value: now)
+        sendEvent(name:"lastSTupdate", value: now, displayed: false)
         
 		def weatherIcon = obs.icon_url.split("/")[-1].split("\\.")[0]
 
