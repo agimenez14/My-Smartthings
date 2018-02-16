@@ -54,6 +54,7 @@ metadata {
         attribute "solarradiation", "string"
         attribute "visibility", "number"
         attribute "pressureTrend", "string"
+        attribute "windChill", "number"
         
 		command "refresh"
 	}
@@ -237,20 +238,11 @@ metadata {
         valueTile("windinfo", "device.windinfo", inactiveLabel: false, width: 2, height: 1, decoration: "flat", wordWrap: true) {
             state "windinfo", label: '${currentValue}'
         }
-        valueTile("temperature2", "device.temperature", width: 1, height: 1, canChangeIcon: true) {
-            state "temperature", label: '${currentValue}°',
-                               backgroundColors:[
-                                   [value: 31, color: "#153591"],
-                                   [value: 44, color: "#1e9cbb"],
-                                   [value: 59, color: "#90d2a7"],
-                                   [value: 74, color: "#44b621"],
-                                   [value: 84, color: "#f1d801"],
-                                   [value: 95, color: "#d04e00"],
-                                   [value: 96, color: "#bc2323"]
-                               ]
+        valueTile("windChill", "device.windChill", inactiveLabel: false, width: 2, height: 1, decoration: "flat", wordWrap: true) {
+            state "windChill", label: 'Wind Chill\n${currentValue}°'
         }
 		main(["temperature"])
-		details(["temperature", "humidity","light", "weatherIcon", "weather", "feelsLike" , "ultravioletIndex","visibility","dewpoint", "rise", "set","solarradiation","windinfo", "pressure",  "percentPrecip", "lastSTupdate",  "percentPrecipToday", "percentPrecipLastHour", "water", "refresh"])}
+		details(["temperature", "humidity","light", "weatherIcon", "weather", "feelsLike" , "ultravioletIndex","visibility","dewpoint", "rise", "set","solarradiation","windinfo", "pressure",  "percentPrecip", "windChill",  "percentPrecipToday", "percentPrecipLastHour", "lastSTupdate", "water", "refresh"])}
 }
 
 // parse events into attributes
@@ -284,7 +276,7 @@ def poll() {
 			send(name: "feelsLike", value: Math.round(obs.feelslike_c as Double), unit: "C")
             send(name: "dewpoint", value: Math.round(obs.dewpoint_c as Double), unit: "C")
 		} else {
-			send(name: "temperature", value: Math.round(obs.temp_f), unit: "F")
+			send(name: "temperature", value: (Math.round(obs.temp_f * 10))/10 , unit: "F")
 			send(name: "feelsLike", value: Math.round(obs.feelslike_f as Double), unit: "F")
             send(name: "dewpoint", value: Math.round(obs.dewpoint_f as Double), unit: "F")
 		}
@@ -346,7 +338,7 @@ def poll() {
                         send(name: "visibility", value: "${obs.visibility_mi as Integer}")
                 }
             } else {
-                send(name: "visibility", value: "${obs.visibility_mi as Integer}")
+                send(name: "visibility", value: "${obs.visibility_mi as double}")
             }      
             
         if (height_units) {
@@ -378,6 +370,13 @@ def poll() {
                         send(name: "winddirection_deg", value: "${obs.wind_degrees}")
                         send(name: "wind", value: "${obs.wind_mph}")
                         send(name: "energy", value: "${obs.wind_gust_mph}")
+                        if ((obs.wind_gust_mph as double) > 2 && (obs.temp_f as double) < 52) {
+                            def WC = (Math.round((35.74 + (0.6215 * (obs.temp_f as double)) - (35.75 * (Math.pow((obs.wind_mph as double), (0.16)))) + (0.4275 * (obs.temp_f as double) * (Math.pow((obs.wind_mph as double), (0.16))))) * 10)) / 10
+                            send(name: "windChill", value: WC) 
+                        }
+                        else {
+                        	send(name: "windChill", value: "-")
+                        }	
                     break;
                     case "speed_kph":
                         send(name: "windinfo", value: "${obs.wind_dir} (${obs.wind_degrees}°) at ${obs.wind_kph} kph\n(Gust: ${obs.wind_gust_kph} kph)")
