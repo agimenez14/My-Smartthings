@@ -32,6 +32,7 @@ metadata
     preferences
     {
     	//realtime reporting
+        input "isUSB", "bool", title: "USB for power?", required: true, displayDuringSetup: true, defaultValue: false
         input "ReportRealTime", "bool", title: "Should values be reported in realtime as they move past thresholds?", required: true, displayDuringSetup: true, defaultValue: false
         input "ReportTemperatureRT", "decimal", title: "Report threshold temperature (degrees):", required: true, displayDuringSetup: true, defaultValue: 1.8
         input "ReportHumidityRT", "decimal", title: "Report threshold for humidity (%):", required: true, displayDuringSetup: true, defaultValue: 1.0
@@ -224,6 +225,9 @@ def zwaveEvent(physicalgraph.zwave.commands.sensormultilevelv5.SensorMultilevelR
 			map.name = "temperature"
 			def cmdScale = cmd.scale == 1 ? "F" : "C" 
             def tempAdj = Math.round(cmd.scaledSensorValue.toDouble()) //- 3)
+            if (isUSB) {
+            	tempAdj = Math.round(cmd.scaledSensorValue.toDouble() - 3)
+            }
             if (cmd.scale != 1)
             	tempAdj = convertTemperatureIfNeeded(cmd.scaledSensorValue, cmdScale, cmd.precision) 
 			map.value = tempAdj
@@ -237,12 +241,14 @@ def zwaveEvent(physicalgraph.zwave.commands.sensormultilevelv5.SensorMultilevelR
 		case 5:
 			map.name = "humidity"
             def humidAdj = cmd.scaledSensorValue 
-            if (humidAdj < 31)
-            	humidAdj = (humidAdj * 1.15).toInteger()
-            else if (tempAdj < 32)
-            	humidAdj = (humidAdj * 1.26).toInteger()
-            else //if (tempAdj < 35)
-            	humidAdj = (humidAdj * 1.3).toInteger()
+            if (isUSB) {
+                if (humidAdj < 31)
+                    humidAdj = (humidAdj * 1.15).toInteger()
+                else if (tempAdj < 32)
+                    humidAdj = (humidAdj * 1.26).toInteger()
+                else //if (tempAdj < 35)
+                    humidAdj = (humidAdj * 1.3).toInteger()
+            }
 			map.value = humidAdj //(cmd.scaledSensorValue * 1.2).toInteger()// + 5
 			map.unit = "%"
 			break;

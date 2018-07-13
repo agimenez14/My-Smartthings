@@ -15,16 +15,11 @@ metadata {
     capability "Health Check"
 
     fingerprint profileId: "0104", endpointId: "01", inClusters: "0000,0001,0003,0004,0005,0020,0201,0202,0204,0B05", outClusters: "000A, 0019", manufacturer: "Zen Within", model: "Zen-01", deviceJoinName: "Zen Thermostat"
-    
-    //attribute "temperatureUnit", "number"
       
     command "setpointUp"
     command "setpointDown"
-    
     command "setCelsius"
     command "setFahrenheit"
-    
-    // To please some of the thermostat SmartApps
     command "poll"
   }
 

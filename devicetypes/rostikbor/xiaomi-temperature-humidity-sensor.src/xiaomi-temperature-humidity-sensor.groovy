@@ -137,7 +137,7 @@ def parse(String description) {
     sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in", displayed: false)
     
     if (name == "temperature"){    	
-    	def celsius = ((value.toDouble() - 32) * 0.5556)
+    	def celsius = (Math.round(((value.toDouble() - 32) * 0.5556) * 10)) / 10
     	sendEvent(name: "temperatureC", value: celsius)
         // temp heartbeat
     	sendEvent(name: "lastTemp", value: now, descriptionText: "", displayed: false)

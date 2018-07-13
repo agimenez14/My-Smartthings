@@ -33,6 +33,7 @@ metadata {
    
    command "enrollResponse"
    command "forceClose"
+   command "forceOpen"
    }
    preferences
    {
@@ -56,7 +57,7 @@ metadata {
     			attributeState("default", label:'Last Opened: ${currentValue}')
             }
       }
-      valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
+      valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 4, height: 1) {
 			state "default", label:'Last Checkin: ${currentValue}'
 		}
       valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 2, height: 2) {
@@ -71,8 +72,11 @@ metadata {
       standardTile("fclose", "device.fclose", inactiveLabel: false, decoration: "flat", width: 1, height: 1) {
             state "default", action:"forceClose", icon:"st.contact.contact.closed"
       }
+      standardTile("fopen", "device.fopen", inactiveLabel: false, decoration: "flat", width: 1, height: 1) {
+            state "default", action:"forceOpen", icon:"st.contact.contact.open"
+      }
       main (["contact"])
-      details(["contact","battery","configure","refresh", "lastcheckin","fclose"])
+      details(["contact","battery","configure","refresh", "lastcheckin","fclose","fopen"])
    }
 }
 
@@ -260,4 +264,8 @@ private byte[] reverseArray(byte[] array) {
 
 def forceClose() {
 	sendEvent(name:"contact", value:"closed", descriptionText: "manual close")
+}
+
+def forceOpen() {
+	sendEvent(name:"contact", value:"open", descriptionText: "manual open")
 }

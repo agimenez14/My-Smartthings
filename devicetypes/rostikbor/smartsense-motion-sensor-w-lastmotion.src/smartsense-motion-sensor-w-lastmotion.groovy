@@ -44,6 +44,7 @@ metadata {
 
 	preferences {
 		section {
+        	input "ToRound", "bool", title: "Round?", required: true, displayDuringSetup: false, defaultValue: true
 			image(name: 'educationalcontent', multiple: true, images: [
 				"http://cdn.device-gse.smartthings.com/Motion/Motion1.jpg",
 				"http://cdn.device-gse.smartthings.com/Motion/Motion2.jpg",
@@ -222,9 +223,20 @@ private Map parseIasMessage(String description) {
 def getTemperature(value) {
 	def celsius = Integer.parseInt(value, 16).shortValue() / 100
 	if(getTemperatureScale() == "C"){
-		return Math.round(celsius)
-	} else {
-		return Math.round(celsiusToFahrenheit(celsius))
+        if (ToRound == true) {
+            return Math.round(celsius)	
+        }
+        else {
+            return Math.round(celsius * 10) / 10
+        }
+	} 
+    else {
+        if (ToRound == true) {
+            return Math.round(celsiusToFahrenheit(celsius))
+        }
+        else {
+            return Math.round(celsiusToFahrenheit(celsius) * 10) / 10 
+        }
 	}
 }
 

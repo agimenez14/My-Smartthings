@@ -16,6 +16,7 @@
  *
  *  Date: 2013-04-30
  */
+
 metadata {
 	definition (name: "SmartWeather Station Tile 2.0", namespace: "RostikBor", author: "RostikBor") {
 		capability "Illuminance Measurement"
@@ -27,6 +28,7 @@ metadata {
         capability "Energy Meter"
 		capability "Power Meter"
 		capability "Water Sensor"
+        capability "Voltage Measurement"
 
 		attribute "localSunrise", "string"
 		attribute "localSunset", "string"
@@ -55,7 +57,12 @@ metadata {
         attribute "visibility", "number"
         attribute "pressureTrend", "string"
         attribute "windChill", "number"
+        attribute "absHumidity", "string"
+        attribute "maxAbsHum", "string"
+        attribute "maxt", "number"
+        attribute "mint", "number"
         
+        command "resetminmax"
 		command "refresh"
 	}
 
@@ -170,8 +177,8 @@ metadata {
         valueTile("lastSTupdate", "device.lastSTupdate", inactiveLabel: false, width: 2, height: 1, decoration: "flat", wordWrap: true) {
 			state("default", label: 'Updated\n${currentValue}')
 	    }
-		valueTile("feelsLike", "device.feelsLike", inactiveLabel: false, width: 2, height: 1, decoration: "flat", wordWrap: true) {
-			state "default", label:'Feels Like\n${currentValue}°'
+		valueTile("feelsLike", "device.feelsLike", inactiveLabel: false, width: 1, height: 1, decoration: "flat", wordWrap: true) {
+			state "default", label:'Like\n${currentValue}°'
 		}
 		valueTile("weather", "device.weather", inactiveLabel: false, width: 1, height: 1, decoration: "flat", wordWrap: true) {
 			state "default", label:'${currentValue}'
@@ -200,7 +207,7 @@ metadata {
 		valueTile("set", "device.localSunset", inactiveLabel: false, width: 2, height: 1, decoration: "flat", wordWrap: true) {
 			state "default", label:'Sunset\n${currentValue}'
 		}
-		valueTile("light", "device.illuminance", inactiveLabel: false, width: 2, height: 2, decoration: "flat", wordWrap: true) {
+		valueTile("light", "device.illuminance", inactiveLabel: false, width: 2, height: 1, decoration: "flat", wordWrap: true) {
 			state "default", label:'${currentValue}\nlux',
 				backgroundColors:[
 					[value: 10, color: "#474747"],
@@ -226,8 +233,8 @@ metadata {
             state "wet",        icon: "st.alarm.water.wet",        backgroundColor:"#ff9999"
             state "dry",       icon: "st.alarm.water.dry",        backgroundColor:"#99ff99"
         }
-        valueTile("dewpoint", "device.dewpoint", inactiveLabel: false, width: 2, height: 1, decoration: "flat", wordWrap: true) {
-			state "default", label:'Dewpoint\n${currentValue}°'
+        valueTile("dewpoint", "device.dewpoint", inactiveLabel: false, width: 1, height: 1, decoration: "flat", wordWrap: true) {
+			state "default", label:'Dew\n${currentValue}°'
         }
         valueTile("pressure", "device.pressure", inactiveLabel: false, width: 2, height: 1, decoration: "flat", wordWrap: true) {
             state "pressure", label: '${currentValue}'
@@ -241,8 +248,20 @@ metadata {
         valueTile("windChill", "device.windChill", inactiveLabel: false, width: 2, height: 1, decoration: "flat", wordWrap: true) {
             state "windChill", label: 'Wind Chill\n${currentValue}°'
         }
+        valueTile("absHumidity", "device.absHumidity", inactiveLabel: false, width: 2, height: 1, decoration: "flat", wordWrap: true) {
+            state "absHumidity", label: 'Abs Humidity\n${currentValue}'
+        }
+        valueTile("maxAbsHum", "device.maxAbsHum", inactiveLabel: false, width: 2, height: 1, decoration: "flat", wordWrap: true) {
+            state "maxAbsHum", label: 'Max Abs Hum\n${currentValue}'
+        }
+        valueTile("mint", "device.mint", inactiveLabel: false, width: 1, height: 1, decoration: "flat", wordWrap: true) {
+			state "default", label:'Min\n${currentValue}°'
+		}
+        valueTile("maxt", "device.maxt", inactiveLabel: false, width: 1, height: 1, decoration: "flat", wordWrap: true) {
+			state "default", label:'Max\n${currentValue}°'
+		}
 		main(["temperature"])
-		details(["temperature", "humidity","light", "weatherIcon", "weather", "feelsLike" , "ultravioletIndex","visibility","dewpoint", "rise", "set","solarradiation","windinfo", "pressure",  "percentPrecip", "windChill",  "percentPrecipToday", "percentPrecipLastHour", "lastSTupdate", "water", "refresh"])}
+		details(["temperature", "humidity","ultravioletIndex", "weatherIcon", "weather", "feelsLike","dewpoint" , "light","visibility","maxAbsHum","absHumidity", "rise", "set","solarradiation","windinfo", "windChill", "pressure",  "percentPrecip",  "percentPrecipToday", "percentPrecipLastHour", "lastSTupdate", "mint", "maxt","water", "refresh"])}
 }
 
 // parse events into attributes
@@ -270,25 +289,40 @@ def poll() {
         sendEvent(name:"lastSTupdate", value: now, displayed: false)
         
 		def weatherIcon = obs.icon_url.split("/")[-1].split("\\.")[0]
-
+		def tempf = (Math.round(obs.temp_f * 10))/10
 		if(getTemperatureScale() == "C") {
 			send(name: "temperature", value: Math.round(obs.temp_c), unit: "C")
 			send(name: "feelsLike", value: Math.round(obs.feelslike_c as Double), unit: "C")
             send(name: "dewpoint", value: Math.round(obs.dewpoint_c as Double), unit: "C")
 		} else {
-			send(name: "temperature", value: (Math.round(obs.temp_f * 10))/10 , unit: "F")
-			send(name: "feelsLike", value: Math.round(obs.feelslike_f as Double), unit: "F")
-            send(name: "dewpoint", value: Math.round(obs.dewpoint_f as Double), unit: "F")
+			send(name: "temperature", value: tempf , unit: "F")
+			send(name: "feelsLike", value: Math.round(obs.feelslike_f as Double), unit: "F", displayed: false)
+            send(name: "dewpoint", value: Math.round(obs.dewpoint_f as Double), unit: "F", displayed: false)
 		}
-		
+        if (tempf > state.tmax) {
+        	state.tmax = tempf
+			send(name: "maxt", value: tempf, displayed: false)
+        }
+        if (tempf < state.tmin) {
+        	state.tmin = tempf
+			send(name: "mint", value: tempf, displayed: false)
+        }
 		send(name: "humidity", value: obs.relative_humidity[0..-2] as Integer, unit: "%")
-		send(name: "weather", value: obs.weather)
+        def ewt = 6.112 * Math.pow(Math.E, ((17.62 * (obs.temp_c as Double)) / (243.12 + (obs.temp_c as Double) )))
+        def fp = 1.0016 + (0.00000315 * (obs.pressure_mb as Double)) - (0.074 / ((obs.pressure_mb as Double))) //1.004676 
+        def eval = (fp * ewt) * ((obs.relative_humidity[0..-2] as Integer)/100)
+        send(name: "maxAbsHum", value: "${(Math.round(((fp * ewt) / (461.5 * ((obs.temp_c as Double) + 273.15))) * 10000000) / 100)} g/m³", displayed: false)
+        def abshum = (Math.round((eval / (461.5 * ((obs.temp_c as Double) + 273.15))) * 10000000) / 100)
+        send(name: "absHumidity", value: "${abshum} g/m³", displayed: false)
+		send(name: "voltage", value: abshum, displayed: false)
+        
+        send(name: "weather", value: obs.weather)
 		send(name: "weatherIcon", value: weatherIcon, displayed: false)
         
         send(name: "ultravioletIndex", value: obs.UV)
-        send(name: "solarradiation", value: obs.solarradiation, display: false)
-        send(name: "power", value: obs.solarradiation as Integer, display: false, unit: "W/m^2")
-        send(name: "illuminance", value: Math.round((obs.solarradiation as Integer)*10)) // 0.0079 W/m^2  per Lux //estimateLux(sunriseDate, sunsetDate, weatherIcon)
+        send(name: "solarradiation", value: obs.solarradiation)
+        send(name: "power", value: obs.solarradiation as Integer, displayed: false, unit: "W/m^2")
+        send(name: "illuminance", value: Math.round((obs.solarradiation as Integer)*10), displayed: false) // 0.0079 W/m^2  per Lux //estimateLux(sunriseDate, sunsetDate, weatherIcon)
                 //Math.round
         def pressure_trend_text
         switch (obs.pressure_trend) {
@@ -364,12 +398,12 @@ def poll() {
         if (speed_units) {
                 switch (speed_units) {
                     case "speed_mph" :
-                        send(name: "windinfo", value: "${obs.wind_dir} (${obs.wind_degrees}°)\n${obs.wind_mph} mph\n(Gust: ${obs.wind_gust_mph} mph)")
-                        send(name: "wind_gust", value: "${obs.wind_gust_mph}")
-                        send(name: "winddirection", value: "${obs.wind_dir}")
-                        send(name: "winddirection_deg", value: "${obs.wind_degrees}")
+                        send(name: "windinfo", value: "${obs.wind_dir} (${obs.wind_degrees}°)\n${obs.wind_mph} mph\n(Gust: ${obs.wind_gust_mph} mph)", displayed: false)
+                        send(name: "wind_gust", value: "${obs.wind_gust_mph}", displayed: false)
+                        send(name: "winddirection", value: "${obs.wind_dir}", displayed: false)
+                        send(name: "winddirection_deg", value: "${obs.wind_degrees}", displayed: false)
                         send(name: "wind", value: "${obs.wind_mph}")
-                        send(name: "energy", value: "${obs.wind_gust_mph}")
+                        send(name: "energy", value: "${obs.wind_gust_mph}", displayed: false)
                         if ((obs.wind_gust_mph as double) > 2 && (obs.temp_f as double) < 52) {
                             def WC = (Math.round((35.74 + (0.6215 * (obs.temp_f as double)) - (35.75 * (Math.pow((obs.wind_mph as double), (0.16)))) + (0.4275 * (obs.temp_f as double) * (Math.pow((obs.wind_mph as double), (0.16))))) * 10)) / 10
                             send(name: "windChill", value: WC) 
@@ -379,14 +413,14 @@ def poll() {
                         }	
                     break;
                     case "speed_kph":
-                        send(name: "windinfo", value: "${obs.wind_dir} (${obs.wind_degrees}°) at ${obs.wind_kph} kph\n(Gust: ${obs.wind_gust_kph} kph)")
+                        send(name: "windinfo", value: "${obs.wind_dir} (${obs.wind_degrees}°) at ${obs.wind_kph} kph\n(Gust: ${obs.wind_gust_kph} kph)", displayed: false)
                     	send(name: "wind_gust", value: "${obs.wind_gust_kph}")
                         send(name: "winddirection", value: "${obs.wind_dir}")
                         send(name: "winddirection_deg", value: "${obs.wind_degrees}")
                         send(name: "wind", value: "${obs.wind_kph}")
                     break;
                     default:
-                    	send(name: "windinfo", value: "${obs.wind_dir} (${obs.wind_degrees}°)\n${obs.wind_mph} mph\n(Gust: ${obs.wind_gust_mph} mph)")
+                    	send(name: "windinfo", value: "${obs.wind_dir} (${obs.wind_degrees}°)\n${obs.wind_mph} mph\n(Gust: ${obs.wind_gust_mph} mph)", displayed: false)
                         send(name: "wind_gust", value: "${obs.wind_gust_mph}")
                         send(name: "winddirection", value: "${obs.wind_dir}")
                         send(name: "winddirection_deg", value: "${obs.wind_degrees}")
@@ -484,6 +518,11 @@ def poll() {
 
 def refresh() {
 	poll()
+}
+
+def resetminmax() {
+    state.tmin = 100
+    state.tmax = 0
 }
 
 def configure() {
