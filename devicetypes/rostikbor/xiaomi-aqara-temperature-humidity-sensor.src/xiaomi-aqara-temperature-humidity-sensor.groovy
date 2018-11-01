@@ -32,6 +32,7 @@ metadata {
         capability "Battery"
         capability "Refresh"
     	capability "Thermostat"
+        capability "Illuminance Measurement"
         
         attribute "lastCheckin", "String"
         attribute "pressure", "number"
@@ -124,7 +125,7 @@ metadata {
 			state "default", action:"refresh.refresh", icon:"st.secondary.refresh"
         }
         valueTile("pressure", "device.pressure", inactiveLabel: false, decoration: "flat", width: 2, height: 1) {
-			state "default", label:'${currentValue}'
+			state "default", label:'${currentValue} hPa'
 		}
 		main(["temperature", "humidity"])
 		details(["temperature", "humidity", "temperatureC","pressure","lasttemp","lasthumid","battery","lastcheckin"])
@@ -155,6 +156,9 @@ def parse(String description) {
     } 
     if (name == "humidity"){
     	sendEvent(name: "lastHumid", value: now, descriptionText: "", displayed: false)
+    }
+    if (name == "pressure"){
+    	sendEvent(name: "illuminance", value: value, unit: "hPa", displayed: false)
     }
 	return result
 }

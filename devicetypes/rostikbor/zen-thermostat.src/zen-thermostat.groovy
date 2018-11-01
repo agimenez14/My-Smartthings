@@ -100,12 +100,15 @@ metadata {
         standardTile("configure", "device.configure", decoration: "flat", width: 2, height: 2) {
             state "configure", label:'', action:"configuration.configure", icon:"st.secondary.configure"
         }
-        valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 4, height: 1) {
+      valueTile("lastMotion", "device.lastMotion", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
+			state "default", label:'Fan On: ${currentValue}'
+		}
+        valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
 			state "default", label:'Last Update: ${currentValue}'
 		}
 
       main "frontTile"
-      details(["temperature", "fanMode", "mode", "thermostatSetpoint", "setpointUp", "setpointDown","refresh", "lastcheckin"])
+      details(["temperature", "fanMode", "mode", "thermostatSetpoint", "setpointUp", "setpointDown", "lastMotion","refresh", "lastcheckin"])
   }
 }
 
@@ -116,7 +119,7 @@ def parse(String description) {
     def map = [:]
     def activeSetpoint = "--"
     
-    def now = new Date().format("MMM-d-yyyy h:mm a", location.timeZone)
+    def now = new Date().format("MMM d h:mm a", location.timeZone)
     sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in", displayed: false)
     
     if (description?.startsWith("read attr -")) 
@@ -167,6 +170,9 @@ def parse(String description) {
         	log.debug "OPERATING STATE"
             map.name = "thermostatOperatingState"
             map.value = getOperatingStateMap()[descMap.value]
+            if (map.value.startsWith("fan only")) {
+                sendEvent(name: "lastMotion", value: now, displayed: false)
+            }
         }
         
         // Fan Control Cluster Attribute Read Response
