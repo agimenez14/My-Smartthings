@@ -22,7 +22,7 @@ metadata {
         capability "Configuration"
 		capability "Sensor"
         capability "Refresh"
-        
+        attribute "lastCheckin", "String"
         attribute "lastPress", "string"
         attribute "batterylevel", "string"
 	}

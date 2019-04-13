@@ -21,6 +21,7 @@ metadata {
     command "setCelsius"
     command "setFahrenheit"
     command "poll"
+    attribute "lastCheckin", "String"
   }
 
   // simulator metadata
