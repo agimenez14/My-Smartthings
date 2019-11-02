@@ -306,10 +306,11 @@ private String parseCatchAllMessage(String description) {
 	if (cluster) {
 		switch(cluster.clusterId) {
 			case 0x0000:
-			if ((cluster.data.get(4) == 1) && (cluster.data.get(5) == 0x21))  // Check CMD and Data Type
-            {
-              result = getBatteryResult((cluster.data.get(7)<<8) + cluster.data.get(6))
-            }
+			//if ((cluster.data.get(4) == 1) && (cluster.data.get(5) == 0x21))  // Check CMD and Data Type
+            //{
+              //result = getBatteryResult((cluster.data.get(7)<<8) + cluster.data.get(6))
+				result = getBatteryResult(cluster.data.get(6)) 
+            //}
  			break
 		}
 	}
@@ -317,7 +318,22 @@ private String parseCatchAllMessage(String description) {
 	return result
 }
 
+private String getBatteryResult(rawValue) {
+	log.debug 'Battery'
+	def linkText = getLinkText(device)
+	log.debug rawValue
 
+	def result =  '--'
+    def maxBatt = 100
+    def battLevel = Math.round(rawValue * 100 / 255)
+	
+	if (battLevel > maxBatt) {
+				battLevel = maxBatt
+    }
+
+	return battLevel
+}
+/*
 private String getBatteryResult(rawValue) {
     def linkText = getLinkText(device)
     //log.debug '${linkText} Battery'
@@ -335,7 +351,7 @@ private String getBatteryResult(rawValue) {
     log.debug "${device.displayName} battery was ${pct}%, ${volts} volts"
     result = pct.toString();
     return result
-}
+}*/
 
 def refresh() {
 	def linkText = getLinkText(device)

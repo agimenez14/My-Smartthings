@@ -13,6 +13,7 @@ metadata {
     capability "Refresh"
     capability "Sensor"
     capability "Health Check"
+	capability "Battery"
 
     fingerprint profileId: "0104", endpointId: "01", inClusters: "0000,0001,0003,0004,0005,0020,0201,0202,0204,0B05", outClusters: "000A, 0019", manufacturer: "Zen Within", model: "Zen-01", deviceJoinName: "Zen Thermostat"
       
@@ -107,9 +108,12 @@ metadata {
         valueTile("lastcheckin", "device.lastCheckin", decoration: "flat", inactiveLabel: false, width: 5, height: 1) {
 			state "default", label:'Last Update: ${currentValue}'
 		}
+        valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 1, height: 1) {
+			state "battery", label:'${currentValue}% battery', unit:""
+		}
 
       main "frontTile"
-      details(["temperature", "fanMode", "mode", "thermostatSetpoint", "setpointUp", "setpointDown", "lastMotion","refresh", "lastcheckin"])
+      details(["temperature", "fanMode", "mode", "thermostatSetpoint", "setpointUp", "setpointDown", "lastMotion","refresh", "lastcheckin","battery"])
   }
 }
 
@@ -123,9 +127,9 @@ def parse(String description) {
     def now = new Date().format("MMM d h:mm a", location.timeZone)
     sendEvent(name: "lastCheckin", value: now, descriptionText: "Check-in", displayed: false)
     
+    def descMap = parseDescriptionAsMap(description)
     if (description?.startsWith("read attr -")) 
     {
-        def descMap = parseDescriptionAsMap(description)
         // Thermostat Cluster Attribute Read Response
         if (descMap.cluster == "0201" && descMap.attrId == "0000") 
         {
@@ -174,21 +178,19 @@ def parse(String description) {
             if (map.value.startsWith("fan only")) {
                 sendEvent(name: "lastMotion", value: now, displayed: false)
             }
-        }
-        
+        }        
         // Fan Control Cluster Attribute Read Response
         else if (descMap.cluster == "0202" && descMap.attrId == "0000") 
         {
             map.name = "thermostatFanMode"
             map.value = getFanModeMap()[descMap.value]
-        } 
-        
-    }// End of Read Attribute Response
-    
-    /*else if (description?.startsWith("updated")) {
-		configure()
-	}
-*/
+        }   
+    } 
+    if (descMap.cluster == "0001") {
+            if (descMap.attrId == "0020") {
+                updateBatteryStatus(descMap.value)
+                }
+    }
     def result = null
     if (map) {
       result = createEvent(map)
@@ -263,7 +265,19 @@ def getTemperature(value)
   return returnValue
 }
 
-
+def updateBatteryStatus(rawValue) {
+    //if (rawValue && rawValue.matches("-?[0-9a-fA-F]+")) {
+        def volts = zigbee.convertHexToInt(rawValue)
+        //if (volts != 255) {
+            def minVolts = 34  // voltage when device UI starts to die, ie. when battery fails
+            def maxVolts = 60  // 4 batteries at 1.5V (6.0V)
+            def pct = (volts > minVolts) ? ((volts - minVolts) / (maxVolts - minVolts)) : 0
+            def value = Math.min(100, (int)(pct * 100))
+            // Update capability "Battery"
+            sendEvent(name: "battery", value: value, description: volts)
+       // }
+    //}
+}
 
 // =============== Setpoints ===============
 def setpointUp()

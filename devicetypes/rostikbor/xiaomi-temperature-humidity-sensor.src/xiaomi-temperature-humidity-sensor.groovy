@@ -221,7 +221,6 @@ private String parseCatchAllMessage(String description) {
 	return result
 }
 
-
 private String getBatteryResult(rawValue) {
 	log.debug 'Battery'
 	def linkText = getLinkText(device)
@@ -234,7 +233,6 @@ private String getBatteryResult(rawValue) {
 	if (battLevel > maxBatt) {
 				battLevel = maxBatt
     }
-
 	return battLevel
 }
 
