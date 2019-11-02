@@ -300,6 +300,12 @@ metadata {
 		standardTile("toggle", "command.toggleDisplay", inactiveLabel: false, width: 2, height: 2) {
 			state "default", label: "toggle", action: "toggleDisplay", icon: "st.motion.motion.inactive"
 		}
+        htmlTile(name:"graphHTML",
+			action: "getGraphHTML",
+			refreshInterval: 1,
+			width: 6,
+			height: 4,
+			whitelist: ["www.gstatic.com"])
 		/* HEMv1 has a battery; v2 is line-powered */
 		 valueTile("battery", "device.battery", decoration: "flat") {
 			state "battery", label:'${currentValue}% battery', unit:""

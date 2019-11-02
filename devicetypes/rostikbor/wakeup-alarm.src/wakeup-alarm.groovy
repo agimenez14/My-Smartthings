@@ -1,6 +1,8 @@
 metadata {
   definition (name: "Wakeup Alarm", namespace: "RostikBor", author: "RostikBor") {
     capability "Sensor"
+    capability "Thermostat"
+    capability "Temperature Measurement"
       
     command "monUp"
     command "monDown"
@@ -23,9 +25,11 @@ metadata {
     command "sunUp"
     command "sunDown"
     command "sunSetpoint"
-    command "reset"
+    command "reset7"
+    command "reset8"
     command "work"
-    command "setWeekDay"
+    command "setWeekDay"    
+    command "thurwk"
     
     attribute "mon", "number"
     attribute "tue", "number"
@@ -34,6 +38,7 @@ metadata {
     attribute "fri", "number"
     attribute "sat", "number"
     attribute "sun", "number"
+    attribute "weekDay", "number"
   }
 
   // simulator metadata
@@ -44,7 +49,7 @@ metadata {
             state "default", label:'${currentValue}'
 		}
         valueTile("mon", "device.mon", decoration: "flat", inactiveLabel: false, width: 2, height: 1) {
-			state "default",label:'Monday'
+			state "default", action:"monwk", label:'Monday'
 		}
         valueTile("monSetpoint", "device.monSetpoint", width: 2, height: 1) {
             state "default", label:'${currentValue}'
@@ -56,7 +61,7 @@ metadata {
             state "default", action:"monDown", icon:"st.thermostat.thermostat-down"
         }
         valueTile("tue", "device.tue", decoration: "flat", inactiveLabel: false, width: 2, height: 1) {
-			state "default", label:'Tuesday'
+			state "default", action:"tuewk", label:'Tuesday'
 		}
         valueTile("tueSetpoint", "device.tueSetpoint", width: 2, height: 1) {
             state "default", label:'${currentValue}'
@@ -68,7 +73,7 @@ metadata {
             state "default", action:"tueDown", icon:"st.thermostat.thermostat-down"
         }
         valueTile("wed", "device.wed", decoration: "flat", inactiveLabel: false, width: 2, height: 1) {
-			state "default", label:'Wednesday'
+			state "default", action:"wedwk", label:'Wednesday'
 		}
         valueTile("wedSetpoint", "device.wedSetpoint", width: 2, height: 1) {
             state "default", label:'${currentValue}'
@@ -80,7 +85,7 @@ metadata {
             state "default", action:"wedDown", icon:"st.thermostat.thermostat-down"
         }
         valueTile("thur", "device.thur", decoration: "flat", inactiveLabel: false, width: 2, height: 1) {
-			state "default", label:'Thursday'
+			state "default", action:"thurwk", label:'Thursday'
 		}
         valueTile("thurSetpoint", "device.thurSetpoint", width: 2, height: 1) {
             state "default", label:'${currentValue}'
@@ -92,7 +97,7 @@ metadata {
             state "default", action:"thurDown", icon:"st.thermostat.thermostat-down"
         }
         valueTile("fri", "device.fri", decoration: "flat", inactiveLabel: false, width: 2, height: 1) {
-			state "default", label:'Friday'
+			state "default", action:"friwk", label:'Friday'
 		}
         valueTile("friSetpoint", "device.friSetpoint", width: 2, height: 1) {
             state "default", label:'${currentValue}'
@@ -104,7 +109,7 @@ metadata {
             state "default", action:"friDown", icon:"st.thermostat.thermostat-down"
         }
         valueTile("sat", "device.sat", decoration: "flat", inactiveLabel: false, width: 2, height: 1) {
-			state "default", label:'Saturday'
+			state "default", action:"satwk", label:'Saturday'
 		}
         valueTile("satSetpoint", "device.satSetpoint", width: 2, height: 1) {
             state "default", label:'${currentValue}'
@@ -116,7 +121,7 @@ metadata {
             state "default", action:"satDown", icon:"st.thermostat.thermostat-down"
         }
         valueTile("sun", "device.sun", decoration: "flat", inactiveLabel: false, width: 2, height: 1) {
-			state "default", label:'Sunday'
+			state "default", action:"sunwk", label:'Sunday'
 		}
         valueTile("sunSetpoint", "device.sunSetpoint", width: 2, height: 1) {
             state "default", label:'${currentValue}'
@@ -127,8 +132,11 @@ metadata {
         standardTile("sunDown", "device.sunDown", decoration: "flat", width: 1, height: 1) {
             state "default", action:"sunDown", icon:"st.thermostat.thermostat-down"
         }
-        standardTile("reset", "device.temperature", decoration: "flat", width: 1, height: 1) {
-            state "default", action:"reset", icon:"st.secondary.refresh"
+        standardTile("reset7", "device.reset7", decoration: "flat", width: 1, height: 1) {
+            state "default", action:"reset7", label:'7'
+        }
+        standardTile("reset8", "device.reset8", decoration: "flat", width: 1, height: 1) {
+            state "default", action:"reset8", label:'8'
         }
         valueTile("work", "device.temperature", decoration: "flat", width: 1, height: 1) {
             state "default", action:"work", label:"Work"
@@ -142,13 +150,11 @@ metadata {
       "fri","friUp", "friSetpoint", "friDown",
       "sat","satUp", "satSetpoint", "satDown",
       "sun","sunUp", "sunSetpoint", "sunDown",
-      "reset","work"
+      "work","reset7","reset8"
       ])
   }
 }
 
-
-// parse events into attributes
 def parse(String description) {
     def map = [:]
     def activeSetpoint = "--"
@@ -177,6 +183,12 @@ def monSetpoint(time)
     def desc = "${time as Integer}:${(60 * (time - (time as Integer))) as Integer}"
 	sendEvent("name":"monSetpoint", "value":desc, displayed:false)
     sendEvent("name":"mon", "value":time, descriptionText: "${desc}")
+    if(device.currentValue("weekDay") == 1) {
+    	setSetpoint(timed) 
+        setWeekDay(1)
+    } else {
+    	setWeekDay(device.currentValue("weekDay"))
+    }
 }
 
 def tueUp()
@@ -195,6 +207,12 @@ def tueSetpoint(time)
     def desc = "${time as Integer}:${(60 * (time - (time as Integer))) as Integer}"
 	sendEvent("name":"tueSetpoint", "value":desc, displayed:false)
     sendEvent("name":"tue", "value":time, descriptionText: "${desc}")
+    if(device.currentValue("weekDay") == 2) {
+    	setSetpoint(timed) 
+        setWeekDay(2)
+    } else {
+    	setWeekDay(device.currentValue("weekDay"))
+    }
 }
 
 def wedUp()
@@ -213,6 +231,12 @@ def wedSetpoint(time)
     def desc = "${time as Integer}:${(60 * (time - (time as Integer))) as Integer}"
 	sendEvent("name":"wedSetpoint", "value":desc, displayed:false)
     sendEvent("name":"wed", "value":time, descriptionText: "${desc}")
+    if(device.currentValue("weekDay") == 3) {
+    	setSetpoint(timed) 
+        setWeekDay(3)
+    } else {
+    	setWeekDay(device.currentValue("weekDay"))
+    }
 }
 
 def thurUp()
@@ -231,6 +255,12 @@ def thurSetpoint(time)
     def desc = "${time as Integer}:${(60 * (time - (time as Integer))) as Integer}"
 	sendEvent("name":"thurSetpoint", "value":desc, displayed:false)
     sendEvent("name":"thur", "value":time, descriptionText: "${desc}")
+    if(device.currentValue("weekDay") == 4) {
+    	setSetpoint(timed) 
+        setWeekDay(4)
+    } else {
+    	setWeekDay(device.currentValue("weekDay"))
+    }
 }
 
 def friUp()
@@ -249,6 +279,12 @@ def friSetpoint(time)
     def desc = "${time as Integer}:${(60 * (time - (time as Integer))) as Integer}"
 	sendEvent("name":"friSetpoint", "value":desc, displayed:false)
     sendEvent("name":"fri", "value":time, descriptionText: "${desc}")
+    if(device.currentValue("weekDay") == 5) {
+    	setSetpoint(timed) 
+        setWeekDay(5)
+    } else {
+    	setWeekDay(device.currentValue("weekDay"))
+    }
 }
 
 def satUp()
@@ -267,6 +303,12 @@ def satSetpoint(time)
     def desc = "${time as Integer}:${(60 * (time - (time as Integer))) as Integer}"
 	sendEvent("name":"satSetpoint", "value":desc, displayed:false)
     sendEvent("name":"sat", "value":time, descriptionText: "${desc}")
+    if(device.currentValue("weekDay") == 6) {
+    	setSetpoint(timed) 
+        setWeekDay(6)
+    } else {
+    	setWeekDay(device.currentValue("weekDay"))
+    }
 }
 
 def sunUp()
@@ -285,9 +327,23 @@ def sunSetpoint(time)
     def desc = "${time as Integer}:${(60 * (time - (time as Integer))) as Integer}"
 	sendEvent("name":"sunSetpoint", "value":desc, displayed:false)
     sendEvent("name":"sun", "value":time, descriptionText: "${desc}")
+    if(device.currentValue("weekDay") == 7) {
+    	setSetpoint(timed) 
+        setWeekDay(7)
+    } else {
+    	setWeekDay(device.currentValue("weekDay"))
+    }
 }
-
-def reset() {
+def work() {
+	monSetpoint(5.25)
+    tueSetpoint(5.25)
+    wedSetpoint(5.25)
+    thurSetpoint(5.25)
+    friSetpoint(5.25)
+    satSetpoint(6.75)
+    sunSetpoint(6.75)
+}
+def reset7() {
 	monSetpoint(7)
     tueSetpoint(7)
     wedSetpoint(7)
@@ -296,16 +352,24 @@ def reset() {
     satSetpoint(7)
     sunSetpoint(7)
 }
-def work() {
-	monSetpoint(5.25)
-    tueSetpoint(5.25)
-    wedSetpoint(5.25)
-    thurSetpoint(5.25)
-    friSetpoint(5.25)
-    satSetpoint(6.5)
-    sunSetpoint(6.5)
+def reset8() {
+	monSetpoint(8)
+    tueSetpoint(8)
+    wedSetpoint(8)
+    thurSetpoint(8)
+    friSetpoint(8)
+    satSetpoint(8)
+    sunSetpoint(8)
+}/*
+def monwk() {
+	setWeekDay(1)
 }
+def thurwk() {
+	setWeekDay(4)
+    setSetpoint(5)
+}*/
 def setWeekDay(wkDay) {
+	sendEvent("name":"weekDay", "value":wkDay, displayed:false)
 	switch (wkDay) {
         case 1:
 			sendEvent("name":"frontTile", "value":"${device.currentValue("tueSetpoint")}", displayed:false)
@@ -328,6 +392,37 @@ def setWeekDay(wkDay) {
         case 7:
 			sendEvent("name":"frontTile", "value":"${device.currentValue("monSetpoint")}", displayed:false)
             break
-    }
-    
+    }   
+}
+def setSetpoint(t) {
+	sendEvent(name:"thermostatSetpoint", value: t*10)
+	sendEvent(name:"temperature", value: t)
+	//sendEvent(name:"thermostatMode", value: "heat")
+}
+def setHeatingSetpoint(t) {
+    t = t/10
+	setSetpoint(t)    
+    switch (device.currentValue("weekDay")) {
+        case 1:
+            tueSetpoint(t)
+            break
+        case 2:
+            wedSetpoint(t)
+            break
+        case 3:
+            thurSetpoint(t)
+            break
+        case 4:
+            friSetpoint(t)
+            break
+        case 5:
+            satSetpoint(t)
+            break
+        case 6:
+            sunSetpoint(t)
+            break
+        case 7:
+			monSetpoint(t)
+            break
+    }    
 }
